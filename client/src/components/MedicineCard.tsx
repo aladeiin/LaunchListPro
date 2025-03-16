@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pill, ArrowRight } from 'lucide-react';
+import { Pill, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
 
 interface MedicineCardProps {
   medicine: Medicine;
@@ -50,6 +50,21 @@ export default function MedicineCard({ medicine }: MedicineCardProps) {
           
           <div className="text-sm">
             <span className="font-medium">Available at:</span> {medicine.availableAt.join(', ')}
+          </div>
+          
+          <div className="flex items-center">
+            {medicine.inStock ? (
+              <Badge className="flex items-center bg-green-100 text-green-800 hover:bg-green-200">
+                <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                In Stock
+                {medicine.stockCount > 0 && <span className="ml-1">({medicine.stockCount})</span>}
+              </Badge>
+            ) : (
+              <Badge className="flex items-center bg-red-100 text-red-800 hover:bg-red-200">
+                <XCircle className="h-3.5 w-3.5 mr-1" />
+                Out of Stock
+              </Badge>
+            )}
           </div>
         </div>
       </CardContent>

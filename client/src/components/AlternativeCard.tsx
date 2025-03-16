@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, CheckCircle, XCircle } from 'lucide-react';
 
 interface AlternativeCardProps {
   alternative: Medicine & { savingsPercentage: number };

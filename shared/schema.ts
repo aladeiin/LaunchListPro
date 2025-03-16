@@ -30,7 +30,9 @@ export const medicines = pgTable("medicines", {
   dosage: text("dosage").notNull(),
   activeIngredient: text("active_ingredient").notNull(),
   imageUrl: text("image_url").notNull().default(""),
-  availableAt: text("available_at").array().notNull().default([])
+  availableAt: text("available_at").array().notNull().default([]),
+  inStock: boolean("in_stock").notNull().default(false),
+  stockCount: integer("stock_count").notNull().default(0)
 });
 
 export const insertMedicineSchema = createInsertSchema(medicines).omit({

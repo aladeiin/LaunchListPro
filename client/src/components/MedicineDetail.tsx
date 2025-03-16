@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 import AlternativeCard from './AlternativeCard';
 
@@ -88,11 +89,23 @@ export default function MedicineDetail({ medicineName }: MedicineDetailProps) {
             <span className="text-2xl font-bold text-primary">
               ₹{formatPrice(medicine.price)}
             </span>
-            <div className="flex justify-end mt-1">
+            <div className="flex justify-end mt-1 space-x-2">
               {medicine.isGeneric ? (
                 <Badge variant="secondary">Generic</Badge>
               ) : (
                 <Badge variant="outline">Branded</Badge>
+              )}
+              {medicine.inStock ? (
+                <Badge className="flex items-center bg-green-100 text-green-800 hover:bg-green-200">
+                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                  In Stock
+                  {medicine.stockCount > 0 && <span className="ml-1">({medicine.stockCount})</span>}
+                </Badge>
+              ) : (
+                <Badge className="flex items-center bg-red-100 text-red-800 hover:bg-red-200">
+                  <XCircle className="h-3.5 w-3.5 mr-1" />
+                  Out of Stock
+                </Badge>
               )}
             </div>
           </div>
