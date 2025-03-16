@@ -1,11 +1,22 @@
-import { useState, useRef, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { nanoid } from "nanoid";
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Send, Bot, User, Info } from "lucide-react";
+import React, { useState, useRef, useEffect } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { apiRequest, queryClient, getQueryFn } from '../lib/queryClient';
+import { v4 as uuidv4 } from 'uuid';
+
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Send, Bot, User, Pill, Loader2 } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
@@ -14,133 +25,202 @@ interface ChatMessage {
 }
 
 export default function ChatInterface() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      message: "Hello! I'm PharmAssist, your personal medication assistant. How can I help you today?",
-      isUserMessage: false
-    }
-  ]);
-  const [inputValue, setInputValue] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const userId = useRef(nanoid());
-
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      const chatContainer = messagesEndRef.current.parentElement;
-      if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      }
-    }
-  };
-
+  const [message, setMessage] = useState('');
+  const [userId] = useState(() => localStorage.getItem('chatUserId') || uuidv4());
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  
+  // Store userId in localStorage for persistence
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    localStorage.setItem('chatUserId', userId);
+  }, [userId]);
 
-  const chatMutation = useMutation({
-    mutationFn: async (message: string) => {
-      const response = await apiRequest("POST", "/api/chat", {
-        userId: userId.current,
-        message,
-        isUserMessage: true
-      });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setMessages(prev => [...prev, {
-        id: nanoid(),
-        message: data.message.message,
-        isUserMessage: false
-      }]);
-    },
-    onError: (error) => {
-      setMessages(prev => [...prev, {
-        id: nanoid(),
-        message: "I'm sorry, I'm having trouble processing your request. Please try again later.",
-        isUserMessage: false
-      }]);
-    }
+  // Fetch previous chat messages
+  const { data: chatHistory, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ['/api/chat', userId],
+    queryFn: getQueryFn({ on401: 'returnNull' }),
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputValue.trim() === "") return;
+  // Initialize messages state
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  
+  // Update messages when chat history is loaded
+  useEffect(() => {
+    if (chatHistory && chatHistory.messages && Array.isArray(chatHistory.messages)) {
+      setMessages(
+        chatHistory.messages.map((msg: any) => ({
+          id: msg.id.toString(),
+          message: msg.message,
+          isUserMessage: msg.isFromUser,
+        }))
+      );
+    }
+  }, [chatHistory]);
 
-    // Add user message to chat
-    const userMessage = {
-      id: nanoid(),
-      message: inputValue,
-      isUserMessage: true
+  // Mutation for sending a new message
+  const sendMessageMutation = useMutation({
+    mutationFn: async (newMessage: string) => {
+      return apiRequest('/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId,
+          message: newMessage,
+        }),
+      });
+    },
+    onSuccess: (response) => {
+      // Add the AI response to the messages
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uuidv4(),
+          message: response.response,
+          isUserMessage: false,
+        },
+      ]);
+      
+      // Invalidate the chat history query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/chat', userId] });
+    },
+  });
+
+  const handleSendMessage = () => {
+    if (!message.trim()) return;
+    
+    // Add the user message to the chat
+    const newMessage: ChatMessage = {
+      id: uuidv4(),
+      message: message.trim(),
+      isUserMessage: true,
     };
-    setMessages(prev => [...prev, userMessage]);
     
-    // Send to API
-    chatMutation.mutate(inputValue);
+    setMessages((prev) => [...prev, newMessage]);
     
-    // Clear input
-    setInputValue("");
+    // Send the message to the API
+    sendMessageMutation.mutate(message.trim());
     
-    // Prevent scroll jumping
-    e.currentTarget.scrollTo(0, 0);
+    // Clear the input
+    setMessage('');
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [messages]);
+
   return (
-    <Card className="bg-white dark:bg-slate-800 shadow-lg transition-colors">
-      <CardHeader className="border-b border-slate-200 dark:border-slate-700 p-4">
-        <h3 className="text-lg font-semibold dark:text-white">PharmAssist Chat</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Ask any questions about medications and get instant answers</p>
+    <Card className="mx-auto max-w-3xl border shadow-lg">
+      <CardHeader className="bg-primary/5">
+        <CardTitle className="flex items-center text-xl">
+          <Bot className="mr-2 h-5 w-5" />
+          AI Pharmacist Assistant
+          <Badge variant="outline" className="ml-2 bg-green-50">
+            <Pill className="mr-1 h-3 w-3" />
+            MediAssist
+          </Badge>
+        </CardTitle>
       </CardHeader>
-      <CardContent className="h-80 p-4 overflow-y-auto flex flex-col gap-4">
-        {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.isUserMessage ? 'justify-end' : ''}`}>
-            {!message.isUserMessage && (
-              <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white mr-3 flex-shrink-0">
-                <Bot size={16} />
+      
+      <ScrollArea ref={scrollAreaRef} className="h-[400px]">
+        <CardContent className="p-4">
+          {isLoadingHistory ? (
+            <div className="space-y-4">
+              <Skeleton className="h-16 w-2/3" />
+              <div className="flex justify-end">
+                <Skeleton className="h-16 w-2/3" />
               </div>
-            )}
-            <div 
-              className={`p-3 max-w-[80%] ${
-                message.isUserMessage 
-                  ? 'bg-blue-50 dark:bg-blue-900 rounded-2xl rounded-br-sm' 
-                  : 'bg-slate-50 dark:bg-slate-700 rounded-2xl rounded-bl-sm'
-              } transition-colors`}
-            >
-              <p className="text-slate-800 dark:text-slate-200 whitespace-pre-line">{message.message}</p>
+              <Skeleton className="h-16 w-3/4" />
             </div>
-            {message.isUserMessage && (
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white ml-3 flex-shrink-0">
-                <User size={16} />
+          ) : messages.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-center p-8">
+              <div>
+                <Bot className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Ask the AI Pharmacist</h3>
+                <p className="text-muted-foreground max-w-md">
+                  Get answers about medications, potential drug interactions, 
+                  side effects, dosages, and more.
+                </p>
               </div>
-            )}
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </CardContent>
-      <CardFooter className="border-t border-slate-200 dark:border-slate-700 p-4 transition-colors">
-        <form onSubmit={handleSubmit} className="w-full">
-          <div className="flex gap-2">
-            <Input 
-              type="text" 
-              placeholder="Ask a question about medications..." 
-              className="flex-1 dark:bg-slate-700 dark:text-white dark:border-slate-600"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              disabled={chatMutation.isPending}
-            />
-            <Button 
-              type="submit" 
-              disabled={chatMutation.isPending}
-              aria-label="Send message"
-            >
-              <Send size={18} />
-            </Button>
-          </div>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 flex items-center">
-            <Info size={10} className="mr-1" />
-            For informational purposes only. Consult a healthcare professional for medical advice.
-          </p>
-        </form>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${
+                    msg.isUserMessage ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  <div
+                    className={`flex max-w-[80%] ${
+                      msg.isUserMessage ? 'flex-row-reverse' : 'flex-row'
+                    }`}
+                  >
+                    <Avatar className={`h-8 w-8 ${msg.isUserMessage ? 'ml-2' : 'mr-2'}`}>
+                      {msg.isUserMessage ? (
+                        <User className="h-4 w-4" />
+                      ) : (
+                        <Bot className="h-4 w-4" />
+                      )}
+                    </Avatar>
+                    <div
+                      className={`rounded-lg p-3 ${
+                        msg.isUserMessage
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {sendMessageMutation.isPending && (
+                <div className="flex justify-start">
+                  <div className="flex max-w-[80%]">
+                    <Avatar className="h-8 w-8 mr-2">
+                      <Bot className="h-4 w-4" />
+                    </Avatar>
+                    <div className="rounded-lg p-3 bg-muted flex items-center">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <p className="text-sm">Thinking...</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </ScrollArea>
+      
+      <CardFooter className="p-4 border-t">
+        <div className="flex w-full items-center space-x-2">
+          <Input
+            placeholder="Ask about medications, side effects, drug interactions..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={sendMessageMutation.isPending}
+          />
+          <Button 
+            onClick={handleSendMessage}
+            disabled={!message.trim() || sendMessageMutation.isPending}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

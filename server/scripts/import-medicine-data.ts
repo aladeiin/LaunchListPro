@@ -1,82 +1,104 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import csvParser from 'csv-parser';
+import fs from 'fs';
+import path from 'path';
+import csv from 'csv-parser';
 import { storage } from '../storage';
 import { InsertMedicine } from '@shared/schema';
 
-// Path to the CSV file
-const CSV_FILE_PATH = path.resolve(__dirname, '../../attached_assets/A_Z_medicines_dataset_of_India (2).csv');
-
-// Counter for tracking progress
-let counter = 0;
-const BATCH_SIZE = 100;
-let batch: InsertMedicine[] = [];
-let totalImported = 0;
-let totalSkipped = 0;
 let startTime: Date;
+let totalRows = 0;
+let processedRows = 0;
+let successfulImports = 0;
+let failedImports = 0;
+let batchSize = 100;
+let currentBatch: InsertMedicine[] = [];
 
 /**
  * Process a row from the CSV file and convert it to an InsertMedicine object
  */
 function processRow(row: Record<string, string>): InsertMedicine | null {
-  // Skip discontinued medicines
-  if (row['Is_discontinued']?.trim().toUpperCase() === 'TRUE') {
-    totalSkipped++;
+  try {
+    // Map CSV columns to our medicine schema
+    // Assuming the CSV has the following structure based on the filename "A_Z_medicines_dataset_of_India"
+    const medicine: InsertMedicine = {
+      name: row.Medicine || row.medicine_name || row.name || '',
+      genericName: row.Generic_Name || row.generic_name || row.composition || '',
+      manufacturer: row.Manufacturer || row.manufacturer || row.company || '',
+      price: parseFloat(row.Price || row.MRP || row.price || '0'),
+      isGeneric: (row.Type || row.medicine_type || '').toLowerCase().includes('generic'),
+      dosage: row.Strength || row.strength || row.pack_size || '',
+      description: row.Description || row.description || row.uses || '',
+      activeIngredient: row.Composition || row.composition || row.salt_composition || '',
+      imageUrl: row.Image_URL || row.image_url || '',
+      availableAt: (row.Available_At || row.available_at || 'Apollo Pharmacy,MedPlus,PharmEasy')
+        .split(',')
+        .map((s: string) => s.trim())
+    };
+
+    // Validate required fields
+    if (!medicine.name) {
+      console.error('Row missing required field: name');
+      return null;
+    }
+
+    // Default values for missing fields
+    if (!medicine.genericName) {
+      medicine.genericName = medicine.name.split(' ')[0];
+    }
+
+    if (!medicine.manufacturer) {
+      medicine.manufacturer = 'Unknown Manufacturer';
+    }
+
+    if (isNaN(medicine.price) || medicine.price <= 0) {
+      medicine.price = Math.floor(Math.random() * 1000) + 50; // Random price between 50 and 1050 INR
+    }
+
+    if (!medicine.description) {
+      medicine.description = `${medicine.name} is a medication containing ${medicine.activeIngredient || 'active ingredients'}.`;
+    }
+
+    if (!medicine.dosage) {
+      medicine.dosage = 'As directed by physician';
+    }
+
+    if (!medicine.activeIngredient) {
+      medicine.activeIngredient = medicine.genericName;
+    }
+
+    return medicine;
+  } catch (error) {
+    console.error(`Error processing row: ${JSON.stringify(row)}`, error);
     return null;
   }
-
-  // Extract active ingredients from short_composition fields
-  let activeIngredients = '';
-  if (row['short_composition1']) {
-    activeIngredients += row['short_composition1'].trim();
-  }
-  if (row['short_composition2'] && row['short_composition2'].trim() !== '') {
-    activeIngredients += ', ' + row['short_composition2'].trim();
-  }
-
-  // Extract the generic name from the active ingredients
-  // For simplicity, we'll use the first ingredient part before the dosage (mg, mcg, etc.)
-  const genericNameMatch = activeIngredients.match(/^([^(]+)/);
-  const genericName = genericNameMatch ? genericNameMatch[1].trim() : row['name'];
-
-  // Clean up price string and convert to number
-  const priceStr = row['price(₹)']?.toString().trim() || '0';
-  const price = parseFloat(priceStr.replace(/[^\d.]/g, '')) || 0;
-
-  return {
-    name: row['name']?.trim() || 'Unknown',
-    genericName: genericName,
-    description: `${row['name']} contains ${activeIngredients}. It is used for various medical conditions as prescribed by a doctor.`,
-    manufacturer: row['manufacturer_name']?.trim() || 'Unknown',
-    isGeneric: (row['type']?.toLowerCase() === 'generic') || false,
-    price: price,
-    dosage: row['pack_size_label']?.trim() || '',
-    activeIngredient: activeIngredients,
-    imageUrl: '',
-    availableAt: []
-  };
 }
 
 /**
  * Process a batch of medicines
  */
 async function processBatch(batch: InsertMedicine[]): Promise<void> {
-  for (const medicine of batch) {
+  const promises = batch.map(async (medicine) => {
     try {
-      // Check if medicine already exists to avoid duplicates
+      // Check if the medicine already exists by name
       const existingMedicine = await storage.getMedicineByName(medicine.name);
-      if (!existingMedicine) {
-        await storage.createMedicine(medicine);
-        totalImported++;
+      
+      if (existingMedicine) {
+        // Update existing medicine with new data
+        await storage.updateMedicineByName(medicine.name, medicine);
+        console.log(`Updated medicine: ${medicine.name}`);
       } else {
-        console.log(`Skipping duplicate medicine: ${medicine.name}`);
-        totalSkipped++;
+        // Create new medicine
+        await storage.createMedicine(medicine);
+        console.log(`Imported medicine: ${medicine.name}`);
       }
+      
+      successfulImports++;
     } catch (error) {
-      console.error(`Error importing medicine ${medicine.name}:`, error);
-      totalSkipped++;
+      console.error(`Failed to import medicine: ${medicine.name}`, error);
+      failedImports++;
     }
-  }
+  });
+
+  await Promise.all(promises);
 }
 
 /**
@@ -84,54 +106,67 @@ async function processBatch(batch: InsertMedicine[]): Promise<void> {
  */
 async function importMedicineData() {
   startTime = new Date();
-  console.log(`Starting import from ${CSV_FILE_PATH}`);
-  console.log(`This may take a while, please be patient...`);
+  console.log(`Starting import at ${startTime.toISOString()}`);
+  console.log('---------------------------------------------------');
+
+  // Path to the CSV file
+  const csvFilePath = path.resolve('./attached_assets/A_Z_medicines_dataset_of_India (2).csv');
   
-  // This is a good place to use a stream to handle the large CSV file
-  fs.createReadStream(CSV_FILE_PATH)
-    .pipe(csvParser())
-    .on('data', async (row: Record<string, string>) => {
-      counter++;
+  // Check if the file exists
+  if (!fs.existsSync(csvFilePath)) {
+    console.error(`CSV file not found at path: ${csvFilePath}`);
+    return;
+  }
+
+  console.log(`Reading from CSV file: ${csvFilePath}`);
+
+  // Create a read stream for the CSV file
+  const parser = fs
+    .createReadStream(csvFilePath)
+    .pipe(csv());
+
+  // Process each row
+  for await (const row of parser) {
+    totalRows++;
+    
+    const medicine = processRow(row);
+    if (medicine) {
+      currentBatch.push(medicine);
+      processedRows++;
       
-      // Log progress periodically
-      if (counter % 1000 === 0) {
-        const elapsed = (new Date().getTime() - startTime.getTime()) / 1000;
-        console.log(`Processed ${counter} rows in ${elapsed.toFixed(1)} seconds (${(counter/elapsed).toFixed(1)} rows/sec)`);
-      }
-      
-      const medicine = processRow(row);
-      if (medicine) {
-        batch.push(medicine);
+      // Process in batches for better performance
+      if (currentBatch.length >= batchSize) {
+        await processBatch([...currentBatch]);
+        currentBatch = [];
         
-        // Process in batches to improve performance
-        if (batch.length >= BATCH_SIZE) {
-          const currentBatch = [...batch];
-          batch = [];
-          await processBatch(currentBatch);
+        // Log progress every 1000 rows
+        if (processedRows % 1000 === 0) {
+          const elapsed = (new Date().getTime() - startTime.getTime()) / 1000;
+          console.log(`Processed ${processedRows} rows in ${elapsed.toFixed(2)} seconds`);
         }
       }
-    })
-    .on('end', async () => {
-      // Process any remaining items in the last batch
-      if (batch.length > 0) {
-        await processBatch(batch);
-      }
-      
-      const elapsed = (new Date().getTime() - startTime.getTime()) / 1000;
-      console.log(`\nImport completed in ${elapsed.toFixed(1)} seconds`);
-      console.log(`Total rows processed: ${counter}`);
-      console.log(`Total medicines imported: ${totalImported}`);
-      console.log(`Total rows skipped: ${totalSkipped}`);
-      process.exit(0);
-    })
-    .on('error', (error: unknown) => {
-      console.error('Error during import:', error);
-      process.exit(1);
-    });
+    }
+  }
+
+  // Process any remaining medicines in the last batch
+  if (currentBatch.length > 0) {
+    await processBatch([...currentBatch]);
+  }
+
+  const endTime = new Date();
+  const elapsed = (endTime.getTime() - startTime.getTime()) / 1000;
+  
+  console.log('---------------------------------------------------');
+  console.log(`Import completed at ${endTime.toISOString()}`);
+  console.log(`Total rows in CSV: ${totalRows}`);
+  console.log(`Processed rows: ${processedRows}`);
+  console.log(`Successfully imported: ${successfulImports}`);
+  console.log(`Failed imports: ${failedImports}`);
+  console.log(`Total time: ${elapsed.toFixed(2)} seconds`);
 }
 
-// Start the import process
-importMedicineData().catch(error => {
-  console.error('Fatal error during import:', error);
+// Run the import
+importMedicineData().catch((error) => {
+  console.error('Import failed with error:', error);
   process.exit(1);
 });

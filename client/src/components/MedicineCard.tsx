@@ -1,7 +1,16 @@
-import { type Medicine } from "@shared/schema";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Info } from "lucide-react";
+import React from 'react';
+import { Medicine } from '@shared/schema';
+import { formatPrice } from '../lib/medicine-data';
+import { Link } from 'wouter';
+
+import {
+  Card,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Pill, ArrowRight } from 'lucide-react';
 
 interface MedicineCardProps {
   medicine: Medicine;
@@ -9,34 +18,53 @@ interface MedicineCardProps {
 
 export default function MedicineCard({ medicine }: MedicineCardProps) {
   return (
-    <Card className="bg-slate-50 border border-slate-200 mb-6">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
+    <Card className="overflow-hidden flex flex-col h-full">
+      <CardContent className="flex-1 p-5">
+        <div className="flex justify-between items-start mb-3">
           <div>
-            <div className="flex items-center">
-              <h4 className="text-lg font-semibold">{medicine.name} ({medicine.genericName})</h4>
-              <Badge className="ml-3 bg-primary-light/10 text-primary-dark" variant="outline">
-                {medicine.isGeneric ? "Generic" : "Brand Name"}
-              </Badge>
-            </div>
-            <p className="text-slate-600 mt-1">{medicine.dosage}</p>
-            <div className="mt-3">
-              <p className="text-sm"><span className="font-medium">Active Ingredient:</span> {medicine.activeIngredient}</p>
-              <p className="text-sm mt-1"><span className="font-medium">Manufacturer:</span> {medicine.manufacturer}</p>
-            </div>
+            <h3 className="text-lg font-semibold">{medicine.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              {medicine.genericName}
+            </p>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold">₹{medicine.price.toFixed(2)}</div>
-            <div className="text-sm text-slate-500">Average price</div>
-          </div>
+          {medicine.isGeneric ? (
+            <Badge variant="secondary">Generic</Badge>
+          ) : (
+            <Badge variant="outline">Branded</Badge>
+          )}
         </div>
-        <div className="mt-4 pt-4 border-t border-slate-200">
-          <p className="text-sm text-slate-700 flex">
-            <Info className="h-4 w-4 text-cyan-500 mr-1 flex-shrink-0 mt-0.5" />
-            <span>{medicine.description}</span>
-          </p>
+        
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm line-clamp-3">{medicine.description}</p>
+          </div>
+          
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Pill className="h-4 w-4 mr-1" />
+            <span>{medicine.dosage}</span>
+          </div>
+          
+          <div className="text-sm">
+            <span className="font-medium">Manufacturer:</span> {medicine.manufacturer}
+          </div>
+          
+          <div className="text-sm">
+            <span className="font-medium">Available at:</span> {medicine.availableAt.join(', ')}
+          </div>
         </div>
       </CardContent>
+      
+      <CardFooter className="flex justify-between items-center pt-0 px-5 pb-5 mt-auto">
+        <div>
+          <p className="font-bold text-xl text-primary">₹{formatPrice(medicine.price)}</p>
+        </div>
+        <Link href={`/medicine/${encodeURIComponent(medicine.name)}`}>
+          <Button size="sm">
+            View Details
+            <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
+        </Link>
+      </CardFooter>
     </Card>
   );
 }
