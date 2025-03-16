@@ -218,7 +218,8 @@ export async function comparePrices(medicineName: string): Promise<Record<string
     };
   } catch (error) {
     console.error('Error comparing prices:', error);
-    throw new Error(`Failed to compare prices: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to compare prices: ${errorMessage}`);
   }
 }
 
