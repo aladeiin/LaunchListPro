@@ -116,7 +116,9 @@ export class MemStorage implements IStorage {
       ...medicine,
       id,
       imageUrl: medicine.imageUrl || "",
-      availableAt: medicine.availableAt || []
+      availableAt: medicine.availableAt || [],
+      inStock: medicine.inStock !== undefined ? medicine.inStock : true,
+      stockCount: medicine.stockCount !== undefined ? medicine.stockCount : 50
     };
     
     // Add metadata fields
@@ -370,7 +372,9 @@ export class MemStorage implements IStorage {
         ...medicine, 
         id,
         imageUrl: medicine.imageUrl || "",
-        availableAt: medicine.availableAt || []
+        availableAt: medicine.availableAt || [],
+        inStock: Math.random() > 0.2, // 80% chance of being in stock
+        stockCount: Math.floor(Math.random() * 100) + 1
       });
     }
   }

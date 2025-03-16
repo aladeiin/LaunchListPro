@@ -17,21 +17,44 @@ let currentBatch: InsertMedicine[] = [];
  */
 function processRow(row: Record<string, string>): InsertMedicine | null {
   try {
-    // Map CSV columns to our medicine schema
-    // Assuming the CSV has the following structure based on the filename "A_Z_medicines_dataset_of_India"
+    // Process based on the CSV structure in A_Z_medicines_dataset_of_India (2).csv
+    // id,name,price(₹),Is_discontinued,manufacturer_name,type,pack_size_label,short_composition1,short_composition2
+    
+    // Skip discontinued medicines
+    if (row.Is_discontinued && row.Is_discontinued.toLowerCase() === 'true') {
+      return null;
+    }
+    
+    // Parse price - remove the ₹ symbol if present
+    const priceString = row['price(₹)'] || row.price || '0';
+    const price = parseFloat(priceString.replace('₹', '').trim());
+    
+    // Generate a random stock status and count
+    const inStock = Math.random() > 0.2; // 80% chance of being in stock
+    const stockCount = inStock ? Math.floor(Math.random() * 100) + 1 : 0;
+    
+    // Get the active ingredients from composition fields
+    const activeIngredient = [row.short_composition1, row.short_composition2]
+      .filter(Boolean)
+      .join(', ');
+    
+    // Determine if it's generic based on the type field
+    const isGeneric = (row.type || '').toLowerCase() === 'generic' || 
+                      (row.type || '').toLowerCase() === 'ayurvedic';
+    
     const medicine: InsertMedicine = {
-      name: row.Medicine || row.medicine_name || row.name || '',
-      genericName: row.Generic_Name || row.generic_name || row.composition || '',
-      manufacturer: row.Manufacturer || row.manufacturer || row.company || '',
-      price: parseFloat(row.Price || row.MRP || row.price || '0'),
-      isGeneric: (row.Type || row.medicine_type || '').toLowerCase().includes('generic'),
-      dosage: row.Strength || row.strength || row.pack_size || '',
-      description: row.Description || row.description || row.uses || '',
-      activeIngredient: row.Composition || row.composition || row.salt_composition || '',
-      imageUrl: row.Image_URL || row.image_url || '',
-      availableAt: (row.Available_At || row.available_at || 'Apollo Pharmacy,MedPlus,PharmEasy')
-        .split(',')
-        .map((s: string) => s.trim())
+      name: row.name || '',
+      genericName: row.short_composition1 || row.name || '',
+      manufacturer: row.manufacturer_name || '',
+      price: price,
+      isGeneric: isGeneric,
+      dosage: row.pack_size_label || '',
+      description: `${row.name} is a ${row.type || 'medication'} manufactured by ${row.manufacturer_name || 'a pharmaceutical company'}. It contains ${activeIngredient || 'active ingredients'}.`,
+      activeIngredient: activeIngredient,
+      imageUrl: '',
+      availableAt: ['Apollo Pharmacy', 'MedPlus', 'PharmEasy'],
+      inStock: inStock,
+      stockCount: stockCount
     };
 
     // Validate required fields
