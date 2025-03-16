@@ -74,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isUserMessage: false
       });
       
-      res.status(201).json({ message: chatMessage });
+      res.status(201).json({ message: chatMessage, response: response });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });

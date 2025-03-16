@@ -64,6 +64,7 @@ export default function ChatInterface() {
         body: JSON.stringify({
           userId,
           message: newMessage,
+          isUserMessage: true,
         }),
       });
     },
@@ -73,7 +74,7 @@ export default function ChatInterface() {
         ...prev,
         {
           id: uuidv4(),
-          message: response.response,
+          message: response.message?.message || "I apologize, but I couldn't process your request at this time.",
           isUserMessage: false,
         },
       ]);
