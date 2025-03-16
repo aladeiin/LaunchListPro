@@ -30,6 +30,7 @@ export default function DemoSection() {
     price: 165.99,
     dosage: "10mg, 30 tablets",
     activeIngredient: "Atorvastatin Calcium",
+    imageUrl: "",
     availableAt: ["CVS", "Walgreens", "Rite Aid"]
   };
 

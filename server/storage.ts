@@ -19,6 +19,9 @@ export interface IStorage {
   getMedicineByName(name: string): Promise<Medicine | undefined>;
   getMedicinesByActiveIngredient(ingredient: string): Promise<Medicine[]>;
   searchMedicines(query: string): Promise<Medicine[]>;
+  createMedicine(medicine: InsertMedicine): Promise<Medicine>;
+  updateMedicine(id: number, medicine: Partial<Medicine>): Promise<Medicine | undefined>;
+  updateMedicineByName(name: string, medicine: Partial<Medicine>): Promise<Medicine | undefined>;
   
   // Chat messages
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
@@ -102,6 +105,62 @@ export class MemStorage implements IStorage {
         medicine.genericName.toLowerCase().includes(query) || 
         medicine.activeIngredient.toLowerCase().includes(query)
     );
+  }
+
+  async createMedicine(medicine: InsertMedicine): Promise<Medicine> {
+    const id = this.medicineCurrentId++;
+    const now = new Date().toISOString();
+    
+    // Create a complete medicine object with metadata
+    const newMedicine: Medicine & { createdAt?: string; lastUpdated?: string } = {
+      ...medicine,
+      id,
+      imageUrl: medicine.imageUrl || "",
+      availableAt: medicine.availableAt || []
+    };
+    
+    // Add metadata fields
+    (newMedicine as any).createdAt = now;
+    (newMedicine as any).lastUpdated = now;
+    
+    this.medicines.set(id, newMedicine);
+    
+    console.log(`Created new medicine: ${medicine.name} (ID: ${id})`);
+    return newMedicine;
+  }
+  
+  async updateMedicine(id: number, updates: Partial<Medicine>): Promise<Medicine | undefined> {
+    const medicine = this.medicines.get(id);
+    
+    if (!medicine) {
+      console.log(`Medicine with ID ${id} not found for update`);
+      return undefined;
+    }
+    
+    // Update only the fields that are provided
+    const updatedMedicine: Medicine & { lastUpdated?: string } = {
+      ...medicine,
+      ...updates
+    };
+    
+    // Update the lastUpdated timestamp
+    (updatedMedicine as any).lastUpdated = new Date().toISOString();
+    
+    this.medicines.set(id, updatedMedicine);
+    
+    console.log(`Updated medicine: ${updatedMedicine.name} (ID: ${id})`);
+    return updatedMedicine;
+  }
+  
+  async updateMedicineByName(name: string, updates: Partial<Medicine>): Promise<Medicine | undefined> {
+    const medicine = await this.getMedicineByName(name);
+    
+    if (!medicine) {
+      console.log(`Medicine with name ${name} not found for update`);
+      return undefined;
+    }
+    
+    return this.updateMedicine(medicine.id, updates);
   }
 
   // Chat message methods
