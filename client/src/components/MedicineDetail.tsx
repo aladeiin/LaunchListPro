@@ -186,7 +186,7 @@ export default function MedicineDetail({ medicineName }: MedicineDetailProps) {
                   Compare prices across different pharmacies
                 </p>
                 <div className="space-y-2">
-                  {medicine.availableAt.map((pharmacy, index) => (
+                  {medicine.availableAt.map((pharmacy: string, index: number) => (
                     <div
                       key={index}
                       className="flex justify-between items-center bg-background p-3 rounded-md"
