@@ -45,6 +45,7 @@ export default function DemoSection() {
       price: 14.99,
       dosage: "10mg, 30 tablets",
       activeIngredient: "Atorvastatin Calcium",
+      imageUrl: "",
       availableAt: ["Walgreens", "CVS", "Walmart Pharmacy"],
       savingsPercentage: 91
     },
@@ -58,6 +59,7 @@ export default function DemoSection() {
       price: 112.99,
       dosage: "5mg, 30 tablets",
       activeIngredient: "Rosuvastatin Calcium",
+      imageUrl: "",
       availableAt: ["CVS", "Rite Aid"],
       savingsPercentage: 32
     }

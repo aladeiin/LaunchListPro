@@ -1,5 +1,4 @@
-// @ts-ignore - node-cron doesn't have type definitions
-import cron from 'node-cron';
+import * as cron from 'node-cron';
 import { Medicine } from '@shared/schema';
 import { storage } from '../storage';
 import { searchMedicines, getMedicineDetails, findAlternatives } from './1mg-scraper';

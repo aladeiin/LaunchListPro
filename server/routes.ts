@@ -6,6 +6,7 @@ import { insertWaitlistUserSchema, insertChatMessageSchema } from "@shared/schem
 import { getMedicationInfo, getChatResponse } from "./openai";
 import { z } from "zod";
 import medicinesRouter from "./routes/medicines";
+import updaterRouter from "./routes/data-updater";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create API router
@@ -37,6 +38,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Mount medicines router
   apiRouter.use("/medicines", medicinesRouter);
+  
+  // Mount data updater router
+  apiRouter.use("/data-updater", updaterRouter);
 
   // Get medication info via OpenAI
   apiRouter.get("/medication-info/:name", async (req: Request, res: Response) => {

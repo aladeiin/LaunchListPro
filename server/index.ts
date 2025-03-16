@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { dataUpdaterService } from "./services/data-updater";
 
 const app = express();
 app.use(express.json());
@@ -66,5 +67,14 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Initialize data updater service with a daily update schedule
+    try {
+      // Schedule update at 2 AM every day - can be changed via API
+      dataUpdaterService.scheduleUpdates('0 2 * * *');
+      log('Scheduled daily medicine database updates at 2 AM');
+    } catch (error) {
+      log(`Failed to schedule medicine database updates: ${error instanceof Error ? error.message : String(error)}`);
+    }
   });
 })();
