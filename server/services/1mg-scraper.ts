@@ -1,9 +1,6 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { Medicine } from '../../shared/schema';
-
-// Base URL for 1mg
-const BASE_URL = 'https://www.1mg.com';
+import { Medicine } from '@shared/schema';
 
 /**
  * Interface for the medicine data structure from 1mg
@@ -22,6 +19,16 @@ interface OneMilligramMedicine {
 }
 
 /**
+ * User agent to mimic a browser request
+ */
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+
+/**
+ * Base URL for 1mg website
+ */
+const BASE_URL = 'https://www.1mg.com';
+
+/**
  * Search for medicines on 1mg based on a query string
  * @param query The search query for medicines
  * @returns An array of medicine objects
@@ -29,60 +36,94 @@ interface OneMilligramMedicine {
 export async function searchMedicines(query: string): Promise<Medicine[]> {
   try {
     const searchUrl = `${BASE_URL}/search/all?name=${encodeURIComponent(query)}`;
+    
     const response = await axios.get(searchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml',
         'Accept-Language': 'en-US,en;q=0.9'
-      }
+      },
+      timeout: 10000 // 10 seconds timeout
     });
-
-    const $ = cheerio.load(response.data);
+    
+    if (response.status !== 200) {
+      throw new Error(`Failed to search medicines: ${response.status}`);
+    }
+    
+    const html = response.data;
+    const $ = cheerio.load(html);
     const medicines: Medicine[] = [];
-    let id = 1;
-
-    // Parse the search results
-    $('.style__product-box___3oEU6').each((i, element) => {
+    
+    // Extract medicine data from search results
+    // The selector below will need to be adjusted based on 1mg's actual HTML structure
+    $('.style__product-box___3oEU6').each(function(i, element) {
       try {
-        const name = $(element).find('.style__pro-title___3zxNC').text().trim();
+        const name = $(element).find('.style__pro-title___3G3rr').text().trim();
         const manufacturer = $(element).find('.style__pack-size___3jScl').text().trim();
-        const priceText = $(element).find('.style__price-tag___KzOkY').text().trim();
-        const price = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0;
+        const priceText = $(element).find('.style__price-tag___B2csA').text().trim();
+        const price = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+        const imageUrl = $(element).find('img').attr('src') || '';
+        const genericName = $(element).find('.style__pack-size___3jScl').text().split('|')[0]?.trim() || name;
+        const description = $(element).find('.style__product-description___1vPge').text().trim();
         
-        // Get the detail page link to fetch more info
-        const detailLink = $(element).find('a').attr('href');
-        let imageUrl = $(element).find('img').attr('src') || '';
-        
-        // If image URL is relative, make it absolute
-        if (imageUrl && !imageUrl.startsWith('http')) {
-          imageUrl = `${BASE_URL}${imageUrl}`;
-        }
-
-        // Create a medicine object with the available information
-        medicines.push({
-          id: id++,
+        // Create a medicine object
+        const medicine: Medicine = {
+          id: i + 1, // Temporary ID, will be replaced in the actual implementation
           name,
-          genericName: '', // Will be populated with detailed fetch
+          genericName,
           manufacturer,
-          isGeneric: name.toLowerCase().includes('generic'),
           price,
-          dosage: '', // Will be populated with detailed fetch
-          activeIngredient: '', // Will be populated with detailed fetch
-          description: '', // Will be populated with detailed fetch
+          dosage: 'Unknown', // Placeholder, could be extracted if available
+          isGeneric: genericName !== name,
+          description: description || `${name} by ${manufacturer}`,
+          activeIngredient: genericName,
           imageUrl,
-          availableAt: ['1mg'] // Default to 1mg
-        });
+          availableAt: ['1mg'] // Default availability
+        };
+        
+        medicines.push(medicine);
       } catch (err) {
-        console.error('Error parsing medicine item:', err);
+        console.error('Error parsing medicine data:', err);
       }
     });
-
-    // Return first 10 results to avoid rate limiting
-    return medicines.slice(0, 10);
-
+    
+    if (medicines.length === 0) {
+      // If no medicines found with the complex selector, try a simpler approach
+      $('.style__product-box___zRpfL').each(function(i, element) {
+        try {
+          const name = $(element).find('h2').text().trim();
+          const manufacturer = $(element).find('.style__manufacturer___2IyM8').text().trim();
+          const priceText = $(element).find('.style__price-tag___KzOkY').text().trim();
+          const price = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+          const imageUrl = $(element).find('img').attr('src') || '';
+          
+          // Create a medicine object with more basic info
+          const medicine: Medicine = {
+            id: i + 1, // Temporary ID
+            name,
+            genericName: name, // Placeholder
+            manufacturer,
+            price,
+            dosage: 'Unknown', // Placeholder
+            isGeneric: false, // Default
+            description: `${name} by ${manufacturer}`, // Basic description
+            activeIngredient: name.split(' ')[0], // Naive extraction
+            imageUrl,
+            availableAt: ['1mg'] // Default availability
+          };
+          
+          medicines.push(medicine);
+        } catch (err) {
+          console.error('Error parsing medicine data (fallback):', err);
+        }
+      });
+    }
+    
+    return medicines;
   } catch (error) {
-    console.error('Error searching 1mg medicines:', error);
-    throw new Error('Failed to search medicines on 1mg');
+    console.error('Error searching medicines on 1mg:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to search medicines on 1mg: ${errorMessage}`);
   }
 }
 
@@ -93,63 +134,34 @@ export async function searchMedicines(query: string): Promise<Medicine[]> {
  */
 export async function getMedicineDetails(name: string): Promise<Medicine | null> {
   try {
-    // Search for the medicine first
+    // First we need to search for the medicine to get its URL
     const searchResults = await searchMedicines(name);
     
-    // If no results, return null
     if (searchResults.length === 0) {
       return null;
     }
-
-    // Find the exact match or the closest match
-    const exactMatch = searchResults.find(
-      med => med.name.toLowerCase() === name.toLowerCase()
-    );
     
-    // Use exact match if found, otherwise use the first result
-    const medicine = exactMatch || searchResults[0];
+    // Find best match from search results
+    let bestMatch = searchResults[0];
+    let bestMatchScore = 0;
     
-    // Try to fetch detailed information if possible
-    try {
-      const detailUrl = `${BASE_URL}/search/all?name=${encodeURIComponent(medicine.name)}`;
-      const response = await axios.get(detailUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml',
-          'Accept-Language': 'en-US,en;q=0.9'
-        }
-      });
-
-      const $ = cheerio.load(response.data);
-      
-      // Try to extract additional information
-      const description = $('.DrugOverview__content___22ZBX').text().trim() || 
-                         'Information not available';
-      
-      const dosage = $('.DrugHeader__dose-form___1SbUx').text().trim() || 
-                    $('.PillItemPriceInfo__form___H6kiE').text().trim() || 
-                    'Information not available';
-      
-      const genericNameElement = $('div:contains("Salt Composition")').next();
-      const genericName = genericNameElement.length ? 
-                         genericNameElement.text().trim() : 
-                         medicine.name.replace(/\s*\([^)]*\)/g, ''); // Remove anything in parentheses
-      
-      // Update the medicine object with detailed information
-      medicine.description = description;
-      medicine.dosage = dosage;
-      medicine.genericName = genericName;
-      medicine.activeIngredient = genericName;
-      
-      // Return the enriched medicine object
-      return medicine;
-    } catch (detailError) {
-      console.warn('Error fetching detailed info, returning basic info:', detailError);
-      return medicine; // Return basic info if detailed fetch fails
+    for (const medicine of searchResults) {
+      // Simple string similarity check (can be improved)
+      const score = calculateSimilarity(medicine.name.toLowerCase(), name.toLowerCase());
+      if (score > bestMatchScore) {
+        bestMatch = medicine;
+        bestMatchScore = score;
+      }
     }
+    
+    // For now, return the best match directly
+    // In a full implementation, we would fetch the detailed page for the medicine
+    // and extract more comprehensive information
+    return bestMatch;
   } catch (error) {
     console.error('Error getting medicine details:', error);
-    throw new Error('Failed to get medicine details from 1mg');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to get medicine details: ${errorMessage}`);
   }
 }
 
@@ -160,23 +172,24 @@ export async function getMedicineDetails(name: string): Promise<Medicine | null>
  */
 export async function findAlternatives(medicineName: string): Promise<Medicine[]> {
   try {
-    // Get the details of the requested medicine
+    // First get the details of the requested medicine
     const medicine = await getMedicineDetails(medicineName);
     
-    if (!medicine || !medicine.activeIngredient) {
-      throw new Error('Medicine not found or active ingredient information not available');
+    if (!medicine) {
+      throw new Error(`Medicine not found: ${medicineName}`);
     }
     
-    // Search for alternatives based on the active ingredient
+    // Search for alternatives using the active ingredient
     const alternatives = await searchMedicines(medicine.activeIngredient);
     
-    // Filter out the original medicine from alternatives
-    return alternatives.filter(alt => 
-      alt.name.toLowerCase() !== medicine.name.toLowerCase()
-    );
+    // Filter out the original medicine and sort by price
+    return alternatives
+      .filter(alt => alt.name.toLowerCase() !== medicine.name.toLowerCase())
+      .sort((a, b) => a.price - b.price);
   } catch (error) {
     console.error('Error finding alternatives:', error);
-    throw new Error('Failed to find medicine alternatives');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to find alternatives: ${errorMessage}`);
   }
 }
 
@@ -190,18 +203,66 @@ export async function comparePrices(medicineName: string): Promise<Record<string
     const medicine = await getMedicineDetails(medicineName);
     
     if (!medicine) {
-      throw new Error('Medicine not found');
+      throw new Error(`Medicine not found: ${medicineName}`);
     }
     
-    // This is a simulated response - in a real app we would scrape multiple sites
+    // In a real implementation, we would scrape multiple pharmacy websites
+    // For now, return simulated data based on the 1mg price
+    const basePrice = medicine.price;
+    
     return {
-      '1mg': medicine.price,
-      'PharmEasy': Math.round(medicine.price * 0.95 * 100) / 100, // Simulated 5% lower
-      'Netmeds': Math.round(medicine.price * 1.02 * 100) / 100, // Simulated 2% higher
-      'Apollo': Math.round(medicine.price * 0.98 * 100) / 100, // Simulated 2% lower
+      '1mg': basePrice,
+      'PharmEasy': Math.round((basePrice * 0.95) * 100) / 100, // 5% less
+      'Netmeds': Math.round((basePrice * 1.02) * 100) / 100,   // 2% more
+      'Apollo': Math.round((basePrice * 0.97) * 100) / 100     // 3% less
     };
   } catch (error) {
     console.error('Error comparing prices:', error);
-    throw new Error('Failed to compare medicine prices');
+    throw new Error(`Failed to compare prices: ${error.message}`);
   }
+}
+
+/**
+ * Calculate string similarity using Levenshtein distance
+ * @param a First string
+ * @param b Second string
+ * @returns Similarity score (0-1)
+ */
+function calculateSimilarity(a: string, b: string): number {
+  if (a === b) return 1;
+  
+  const lenA = a.length;
+  const lenB = b.length;
+  
+  if (lenA === 0 || lenB === 0) {
+    return 0;
+  }
+  
+  // Calculate Levenshtein distance
+  const matrix: number[][] = [];
+  
+  for (let i = 0; i <= lenA; i++) {
+    matrix[i] = [i];
+  }
+  
+  for (let j = 0; j <= lenB; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= lenA; i++) {
+    for (let j = 1; j <= lenB; j++) {
+      const cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,      // deletion
+        matrix[i][j - 1] + 1,      // insertion
+        matrix[i - 1][j - 1] + cost // substitution
+      );
+    }
+  }
+  
+  const distance = matrix[lenA][lenB];
+  const maxLen = Math.max(lenA, lenB);
+  
+  // Convert distance to similarity score (0-1)
+  return 1 - (distance / maxLen);
 }
