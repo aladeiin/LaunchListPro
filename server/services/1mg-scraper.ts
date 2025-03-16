@@ -408,8 +408,8 @@ export async function findAlternatives(medicineName: string): Promise<Medicine[]
     // If we have many alternatives, prefer those with higher similarity
     if (alternatives.length > 5) {
       alternatives = alternatives
-        .filter(alt => alt.similarityScore > 0.3) // Keep only somewhat related medicines
-        .sort((a, b) => a.price - b.price);       // Still sort by price
+        .filter(alt => (alt.similarityScore || 0) > 0.3) // Keep only somewhat related medicines
+        .sort((a, b) => a.price - b.price);              // Still sort by price
     }
     
     return alternatives;

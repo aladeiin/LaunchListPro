@@ -26,7 +26,12 @@ export default function ChatInterface() {
   const userId = useRef(nanoid());
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      const chatContainer = messagesEndRef.current.parentElement;
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
   };
 
   useEffect(() => {
@@ -75,6 +80,9 @@ export default function ChatInterface() {
     
     // Clear input
     setInputValue("");
+    
+    // Prevent scroll jumping
+    e.currentTarget.scrollTo(0, 0);
   };
 
   return (
@@ -128,9 +136,9 @@ export default function ChatInterface() {
               <Send size={18} />
             </Button>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center">
-            <Info size={12} className="mr-1" />
-            For informational purposes only. Always consult a healthcare professional for medical advice.
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 flex items-center">
+            <Info size={10} className="mr-1" />
+            For informational purposes only. Consult a healthcare professional for medical advice.
           </p>
         </form>
       </CardFooter>
