@@ -53,9 +53,9 @@ export default function Header() {
             size="icon"
             onClick={toggleTheme}
             aria-label={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
-            className="rounded-full"
+            className="rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
           >
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            {theme === 'dark' ? <Sun size={20} className="text-yellow-300" /> : <Moon size={20} className="text-slate-700" />}
           </Button>
           <Button 
             onClick={() => document.getElementById('join-waitlist')?.scrollIntoView({ behavior: 'smooth' })}
