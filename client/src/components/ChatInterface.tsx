@@ -46,11 +46,12 @@ export default function ChatInterface() {
   // Update messages when chat history is loaded
   useEffect(() => {
     if (chatHistory && chatHistory.messages && Array.isArray(chatHistory.messages)) {
+      console.log("Chat history loaded:", chatHistory.messages);
       setMessages(
         chatHistory.messages.map((msg: any) => ({
           id: msg.id.toString(),
           message: msg.message,
-          isUserMessage: msg.isFromUser,
+          isUserMessage: msg.isUserMessage, // Changed from isFromUser to isUserMessage to match backend schema
         }))
       );
     }
@@ -59,6 +60,12 @@ export default function ChatInterface() {
   // Mutation for sending a new message
   const sendMessageMutation = useMutation({
     mutationFn: async (newMessage: string) => {
+      console.log("Sending chat message to API:", {
+        userId,
+        message: newMessage,
+        isUserMessage: true,
+      });
+      
       return apiRequest('/api/chat', {
         method: 'POST',
         body: JSON.stringify({
@@ -70,12 +77,23 @@ export default function ChatInterface() {
     },
     onSuccess: (response) => {
       console.log("Chat API response:", response);
+      console.log("Response type:", typeof response);
+      console.log("Response.response:", response.response);
+      console.log("Response.message:", response.message);
+      
+      // Extract the AI's response from the response object
+      const aiResponse = response.response || 
+                        (response.message && response.message.message) || 
+                        "I apologize, but I couldn't process your request at this time.";
+      
+      console.log("Final AI response:", aiResponse);
+      
       // Add the AI response to the messages
       setMessages((prev) => [
         ...prev,
         {
           id: uuidv4(),
-          message: response.response || response.message?.message || "I apologize, but I couldn't process your request at this time.",
+          message: aiResponse,
           isUserMessage: false,
         },
       ]);
