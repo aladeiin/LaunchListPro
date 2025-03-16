@@ -78,10 +78,10 @@ export default function ChatInterface() {
   };
 
   return (
-    <Card className="bg-white shadow-lg">
-      <CardHeader className="border-b border-slate-200 p-4">
-        <h3 className="text-lg font-semibold">PharmAssist Chat</h3>
-        <p className="text-sm text-slate-500">Ask any questions about medications and get instant answers</p>
+    <Card className="bg-white dark:bg-slate-800 shadow-lg transition-colors">
+      <CardHeader className="border-b border-slate-200 dark:border-slate-700 p-4">
+        <h3 className="text-lg font-semibold dark:text-white">PharmAssist Chat</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Ask any questions about medications and get instant answers</p>
       </CardHeader>
       <CardContent className="h-80 p-4 overflow-y-auto flex flex-col gap-4">
         {messages.map((message) => (
@@ -94,11 +94,11 @@ export default function ChatInterface() {
             <div 
               className={`p-3 max-w-[80%] ${
                 message.isUserMessage 
-                  ? 'bg-blue-50 rounded-2xl rounded-br-sm' 
-                  : 'bg-slate-50 rounded-2xl rounded-bl-sm'
-              }`}
+                  ? 'bg-blue-50 dark:bg-blue-900 rounded-2xl rounded-br-sm' 
+                  : 'bg-slate-50 dark:bg-slate-700 rounded-2xl rounded-bl-sm'
+              } transition-colors`}
             >
-              <p className="text-slate-800 whitespace-pre-line">{message.message}</p>
+              <p className="text-slate-800 dark:text-slate-200 whitespace-pre-line">{message.message}</p>
             </div>
             {message.isUserMessage && (
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white ml-3 flex-shrink-0">
@@ -109,13 +109,13 @@ export default function ChatInterface() {
         ))}
         <div ref={messagesEndRef} />
       </CardContent>
-      <CardFooter className="border-t border-slate-200 p-4">
+      <CardFooter className="border-t border-slate-200 dark:border-slate-700 p-4 transition-colors">
         <form onSubmit={handleSubmit} className="w-full">
           <div className="flex gap-2">
             <Input 
               type="text" 
               placeholder="Ask a question about medications..." 
-              className="flex-1"
+              className="flex-1 dark:bg-slate-700 dark:text-white dark:border-slate-600"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               disabled={chatMutation.isPending}
@@ -128,7 +128,7 @@ export default function ChatInterface() {
               <Send size={18} />
             </Button>
           </div>
-          <p className="text-xs text-slate-500 mt-2 flex items-center">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center">
             <Info size={12} className="mr-1" />
             For informational purposes only. Always consult a healthcare professional for medical advice.
           </p>

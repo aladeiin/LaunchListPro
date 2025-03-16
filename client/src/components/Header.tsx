@@ -33,17 +33,17 @@ export default function Header() {
         </div>
         
         <nav className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row md:space-x-6 w-full md:w-auto`}>
-          <Link href="/">
-            <a className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">Home</a>
+          <Link href="/" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
+            Home
           </Link>
-          <Link href="/#how-it-works">
-            <a className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">How It Works</a>
+          <Link href="/#how-it-works" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
+            How It Works
           </Link>
-          <Link href="/#features">
-            <a className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">Features</a>
+          <Link href="/#features" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
+            Features
           </Link>
-          <Link href="/#about">
-            <a className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">About</a>
+          <Link href="/#about" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
+            About
           </Link>
         </nav>
         
