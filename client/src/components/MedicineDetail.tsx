@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Medicine } from '@shared/schema';
 import { useQuery } from '@tanstack/react-query';
-import { getQueryFn } from '../lib/queryClient';
+import { getQueryFn, apiRequest } from '../lib/queryClient';
 import { calculateSavings, formatPrice } from '../lib/medicine-data';
 
 import {
@@ -37,14 +37,24 @@ export default function MedicineDetail({ medicineName }: MedicineDetailProps) {
   // Fetch medicine details
   const { data: medicine, isLoading: isLoadingMedicine } = useQuery({
     queryKey: ['/api/medicines/name', medicineName],
-    queryFn: getQueryFn({ on401: 'returnNull' }),
+    queryFn: () => {
+      // Use apiRequest with proper endpoint for medicine details by name
+      return apiRequest(`/api/medicines/name/${encodeURIComponent(medicineName)}`, {
+        method: 'GET'
+      });
+    },
     enabled: !!medicineName,
   });
 
   // Fetch medicine alternatives
   const { data: alternatives, isLoading: isLoadingAlternatives } = useQuery({
     queryKey: ['/api/medicines', medicineName, 'alternatives'],
-    queryFn: getQueryFn({ on401: 'returnNull' }),
+    queryFn: () => {
+      // Use apiRequest with proper endpoint for medicine alternatives
+      return apiRequest(`/api/medicines/${encodeURIComponent(medicineName)}/alternatives`, {
+        method: 'GET'
+      });
+    },
     enabled: !!medicineName,
   });
 

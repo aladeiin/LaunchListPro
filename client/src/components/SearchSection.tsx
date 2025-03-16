@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Medicine } from '@shared/schema';
-import { getQueryFn } from '../lib/queryClient';
+import { getQueryFn, apiRequest } from '../lib/queryClient';
 import { formatPrice } from '../lib/medicine-data';
 
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,12 @@ export default function SearchSection() {
   // Query for searching medicines
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ['/api/medicines/search', searchTerm],
-    queryFn: getQueryFn({ on401: 'returnNull' }),
+    queryFn: () => {
+      // Use apiRequest with custom URL including the query parameter
+      return apiRequest(`/api/medicines/search?q=${encodeURIComponent(searchTerm)}`, {
+        method: 'GET'
+      });
+    },
     enabled: searchTerm.length > 2, // Only run query if search term is longer than 2 chars
     select: (data) => {
       // The search endpoint returns an array of medicines
