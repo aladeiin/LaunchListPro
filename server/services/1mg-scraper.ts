@@ -120,9 +120,7 @@ export async function getMedicineDetails(name: string): Promise<Medicine | null>
       dosage: 'As directed by physician',
       activeIngredient: activeIngredient,
       imageUrl: `https://onemg.gumlet.io/a_ignore,w_380,h_380,c_fit,q_auto,f_auto/c2a0598f-a7c8-48ec-9bf9-47ac3d73b153.jpg`,
-      availableAt: ['Apollo Pharmacy', 'MedPlus', 'NetMeds'],
-      createdAt: new Date(),
-      updatedAt: new Date()
+      availableAt: ['Apollo Pharmacy', 'MedPlus', 'NetMeds']
     };
     
     return medicine;

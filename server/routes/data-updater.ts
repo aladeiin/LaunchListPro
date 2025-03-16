@@ -1,5 +1,6 @@
-import { Router, Request, Response } from "express";
-import { dataUpdaterService } from "../services/data-updater";
+import { Router, Request, Response } from 'express';
+import { dataUpdaterService } from '../services/data-updater';
+import { z } from 'zod';
 
 const updaterRouter = Router();
 
@@ -10,16 +11,10 @@ const updaterRouter = Router();
 updaterRouter.get("/status", (req: Request, res: Response) => {
   try {
     const status = dataUpdaterService.getStatus();
-    res.json({
-      success: true,
-      data: status
-    });
+    res.json(status);
   } catch (error) {
-    console.error("Error getting data updater status:", error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
+    console.error('Error getting updater status:', error);
+    res.status(500).json({ error: 'Failed to get updater status' });
   }
 });
 
@@ -30,32 +25,22 @@ updaterRouter.get("/status", (req: Request, res: Response) => {
 updaterRouter.post("/start", async (req: Request, res: Response) => {
   try {
     if (dataUpdaterService.getStatus().isUpdating) {
-      return res.status(409).json({
-        success: false,
-        error: "Update is already in progress"
-      });
+      return res.status(409).json({ error: 'Update already in progress' });
     }
 
-    // Start the update process in the background
-    dataUpdaterService.updateDatabase()
-      .then(results => {
-        console.log("Data update completed successfully:", results);
-      })
-      .catch(error => {
-        console.error("Data update failed:", error);
-      });
-
+    // Run update in the background
+    const updatePromise = dataUpdaterService.updateDatabase();
+    
     // Immediately return a response
-    res.json({
-      success: true,
-      message: "Data update started"
+    res.json({ message: 'Update started successfully', status: 'in_progress' });
+    
+    // Handle the update asynchronously
+    updatePromise.catch(error => {
+      console.error('Error during manual update:', error);
     });
   } catch (error) {
-    console.error("Error starting data update:", error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
+    console.error('Error starting update:', error);
+    res.status(500).json({ error: 'Failed to start update process' });
   }
 });
 
@@ -65,27 +50,26 @@ updaterRouter.post("/start", async (req: Request, res: Response) => {
  */
 updaterRouter.post("/schedule", (req: Request, res: Response) => {
   try {
-    const { cronExpression } = req.body;
-
-    if (!cronExpression) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing cronExpression in request body"
-      });
+    const scheduleSchema = z.object({
+      cronExpression: z.string().optional()
+    });
+    
+    const parsedBody = scheduleSchema.safeParse(req.body);
+    
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: 'Invalid request body', details: parsedBody.error });
     }
-
+    
+    const { cronExpression } = parsedBody.data;
     dataUpdaterService.scheduleUpdates(cronExpression);
-
-    res.json({
-      success: true,
-      message: `Data updates scheduled with cron expression: ${cronExpression}`
+    
+    res.json({ 
+      message: 'Schedule updated successfully', 
+      cronExpression: cronExpression || '0 2 * * *' // Default is 2 AM daily
     });
   } catch (error) {
-    console.error("Error scheduling data updates:", error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
+    console.error('Error scheduling updates:', error);
+    res.status(500).json({ error: 'Failed to schedule updates' });
   }
 });
 
@@ -96,17 +80,10 @@ updaterRouter.post("/schedule", (req: Request, res: Response) => {
 updaterRouter.post("/stop-schedule", (req: Request, res: Response) => {
   try {
     dataUpdaterService.stopScheduledUpdates();
-    
-    res.json({
-      success: true,
-      message: "Scheduled data updates stopped"
-    });
+    res.json({ message: 'Scheduled updates stopped successfully' });
   } catch (error) {
-    console.error("Error stopping scheduled data updates:", error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
+    console.error('Error stopping scheduled updates:', error);
+    res.status(500).json({ error: 'Failed to stop scheduled updates' });
   }
 });
 
@@ -116,27 +93,26 @@ updaterRouter.post("/stop-schedule", (req: Request, res: Response) => {
  */
 updaterRouter.post("/popular-medicines", (req: Request, res: Response) => {
   try {
-    const { medicines } = req.body;
-
-    if (!medicines || !Array.isArray(medicines)) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing or invalid medicines array in request body"
-      });
+    const popularMedicinesSchema = z.object({
+      medicines: z.array(z.string())
+    });
+    
+    const parsedBody = popularMedicinesSchema.safeParse(req.body);
+    
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: 'Invalid request body', details: parsedBody.error });
     }
-
+    
+    const { medicines } = parsedBody.data;
     dataUpdaterService.setPopularMedicinesList(medicines);
-
-    res.json({
-      success: true,
-      message: `Popular medicines list updated with ${medicines.length} items`
+    
+    res.json({ 
+      message: 'Popular medicines list updated successfully', 
+      count: medicines.length
     });
   } catch (error) {
-    console.error("Error updating popular medicines list:", error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
+    console.error('Error updating popular medicines list:', error);
+    res.status(500).json({ error: 'Failed to update popular medicines list' });
   }
 });
 

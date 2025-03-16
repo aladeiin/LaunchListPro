@@ -201,7 +201,7 @@ class DataUpdaterService {
       stats.failed++;
       stats.errors.push({ 
         medicine: medicineName, 
-        error: error.message || 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error' 
       });
       console.error(`Error updating medicine ${medicineName}:`, error);
     }

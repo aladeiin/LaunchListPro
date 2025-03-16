@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as csvParser from 'csv-parser';
+import csvParser from 'csv-parser';
 import { storage } from '../storage';
 import { InsertMedicine } from '@shared/schema';
 
@@ -18,7 +18,7 @@ let startTime: Date;
 /**
  * Process a row from the CSV file and convert it to an InsertMedicine object
  */
-function processRow(row: any): InsertMedicine | null {
+function processRow(row: Record<string, string>): InsertMedicine | null {
   // Skip discontinued medicines
   if (row['Is_discontinued']?.trim().toUpperCase() === 'TRUE') {
     totalSkipped++;
@@ -90,7 +90,7 @@ async function importMedicineData() {
   // This is a good place to use a stream to handle the large CSV file
   fs.createReadStream(CSV_FILE_PATH)
     .pipe(csvParser())
-    .on('data', async (row) => {
+    .on('data', async (row: Record<string, string>) => {
       counter++;
       
       // Log progress periodically
@@ -124,7 +124,7 @@ async function importMedicineData() {
       console.log(`Total rows skipped: ${totalSkipped}`);
       process.exit(0);
     })
-    .on('error', (error) => {
+    .on('error', (error: unknown) => {
       console.error('Error during import:', error);
       process.exit(1);
     });
