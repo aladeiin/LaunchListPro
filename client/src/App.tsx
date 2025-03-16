@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
+import { ThemeProvider } from "./lib/theme-context";
 
 function Router() {
   return (
@@ -19,8 +20,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <ThemeProvider>
+        <Router />
+        <Toaster />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -1,15 +1,17 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, Moon, Sun, X } from "lucide-react";
+import { useTheme } from "@/lib/theme-context";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
+    <header className="bg-white dark:bg-slate-900 shadow-md sticky top-0 z-50 transition-colors">
       <div className="container mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between">
         <div className="flex items-center mb-4 md:mb-0 justify-between w-full md:w-auto">
           <div className="flex items-center">
@@ -32,20 +34,29 @@ export default function Header() {
         
         <nav className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row md:space-x-6 w-full md:w-auto`}>
           <Link href="/">
-            <a className="text-neutral-700 hover:text-primary transition py-2 md:py-0">Home</a>
+            <a className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">Home</a>
           </Link>
           <Link href="/#how-it-works">
-            <a className="text-neutral-700 hover:text-primary transition py-2 md:py-0">How It Works</a>
+            <a className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">How It Works</a>
           </Link>
           <Link href="/#features">
-            <a className="text-neutral-700 hover:text-primary transition py-2 md:py-0">Features</a>
+            <a className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">Features</a>
           </Link>
           <Link href="/#about">
-            <a className="text-neutral-700 hover:text-primary transition py-2 md:py-0">About</a>
+            <a className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">About</a>
           </Link>
         </nav>
         
         <div className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex items-center space-x-4 mt-4 md:mt-0`}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+            className="rounded-full"
+          >
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </Button>
           <Button 
             onClick={() => document.getElementById('join-waitlist')?.scrollIntoView({ behavior: 'smooth' })}
             className="w-full md:w-auto"
