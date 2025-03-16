@@ -22,7 +22,7 @@ let currentBatch: InsertMedicine[] = [];
  */
 function processRow(row: Record<string, string>): InsertMedicine | null {
   try {
-    // Process based on the CSV structure in A_Z_medicines_dataset_of_India (2).csv
+    // Process based on the CSV structure in A_Z_medicines_dataset_of_India (3).csv
     // id,name,price(₹),Is_discontinued,manufacturer_name,type,pack_size_label,short_composition1,short_composition2
     
     // Skip discontinued medicines
@@ -34,7 +34,8 @@ function processRow(row: Record<string, string>): InsertMedicine | null {
     const priceString = row['price(₹)'] || row.price || '0';
     const price = parseFloat(priceString.replace('₹', '').trim());
     
-    // Generate a random stock status and count
+    // Determine stock status based on logic - for this dataset, we'll make
+    // 80% of medicines in stock with varying stock counts
     const inStock = Math.random() > 0.2; // 80% chance of being in stock
     const stockCount = inStock ? Math.floor(Math.random() * 100) + 1 : 0;
     
@@ -138,7 +139,7 @@ async function importMedicineData() {
   console.log('---------------------------------------------------');
 
   // Path to the CSV file
-  const csvFilePath = path.resolve(path.join(__dirname, '../../attached_assets/A_Z_medicines_dataset_of_India (2).csv'));
+  const csvFilePath = path.resolve(path.join(__dirname, '../../attached_assets/A_Z_medicines_dataset_of_India (3).csv'));
   
   // Check if the file exists
   if (!fs.existsSync(csvFilePath)) {

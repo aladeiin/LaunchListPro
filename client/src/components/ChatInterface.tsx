@@ -124,10 +124,10 @@ export default function ChatInterface() {
       <CardHeader className="bg-primary/5">
         <CardTitle className="flex items-center text-xl">
           <Bot className="mr-2 h-5 w-5" />
-          AI Pharmacist Assistant
+          PharmAssist
           <Badge variant="outline" className="ml-2 bg-green-50">
             <Pill className="mr-1 h-3 w-3" />
-            MediAssist
+            AI Pharmacist
           </Badge>
         </CardTitle>
       </CardHeader>
