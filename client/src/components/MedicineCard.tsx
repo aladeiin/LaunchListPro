@@ -26,7 +26,7 @@ export default function MedicineCard({ medicine }: MedicineCardProps) {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">${medicine.price.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{medicine.price.toFixed(2)}</div>
             <div className="text-sm text-slate-500">Average price</div>
           </div>
         </div>

@@ -53,7 +53,7 @@ export default function AlternativeCard({ alternative, originalMedicine }: Alter
             </div>
           </div>
           <div className="text-right">
-            <div className="text-xl font-bold">${alternative.price.toFixed(2)}</div>
+            <div className="text-xl font-bold">₹{alternative.price.toFixed(2)}</div>
             <div className="text-xs text-green-600 font-medium">Save {alternative.savingsPercentage}%</div>
           </div>
         </div>
