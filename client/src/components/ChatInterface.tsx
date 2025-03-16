@@ -17,7 +17,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
-      message: "Hello! I'm MediAssist, your personal medication assistant. How can I help you today?",
+      message: "Hello! I'm PharmAssist, your personal medication assistant. How can I help you today?",
       isUserMessage: false
     }
   ]);
@@ -37,7 +37,8 @@ export default function ChatInterface() {
     mutationFn: async (message: string) => {
       const response = await apiRequest("POST", "/api/chat", {
         userId: userId.current,
-        message
+        message,
+        isUserMessage: true
       });
       return response.json();
     },
@@ -79,7 +80,7 @@ export default function ChatInterface() {
   return (
     <Card className="bg-white shadow-lg">
       <CardHeader className="border-b border-slate-200 p-4">
-        <h3 className="text-lg font-semibold">MediAssist Chat</h3>
+        <h3 className="text-lg font-semibold">PharmAssist Chat</h3>
         <p className="text-sm text-slate-500">Ask any questions about medications and get instant answers</p>
       </CardHeader>
       <CardContent className="h-80 p-4 overflow-y-auto flex flex-col gap-4">
