@@ -32,6 +32,13 @@ export default function SearchSection() {
     queryKey: ['/api/medicines/search', searchTerm],
     queryFn: getQueryFn({ on401: 'returnNull' }),
     enabled: searchTerm.length > 2, // Only run query if search term is longer than 2 chars
+    select: (data) => {
+      // The search endpoint returns an array of medicines
+      if (data && Array.isArray(data)) {
+        return data;
+      }
+      return [];
+    }
   });
 
   const handleSearch = () => {
