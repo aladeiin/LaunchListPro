@@ -1,8 +1,13 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import csv from 'csv-parser';
 import { storage } from '../storage';
 import { InsertMedicine } from '@shared/schema';
+
+// Get the current file path for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let startTime: Date;
 let totalRows = 0;
@@ -133,7 +138,7 @@ async function importMedicineData() {
   console.log('---------------------------------------------------');
 
   // Path to the CSV file
-  const csvFilePath = path.resolve('./attached_assets/A_Z_medicines_dataset_of_India (2).csv');
+  const csvFilePath = path.resolve(path.join(__dirname, '../../attached_assets/A_Z_medicines_dataset_of_India (2).csv'));
   
   // Check if the file exists
   if (!fs.existsSync(csvFilePath)) {

@@ -108,7 +108,11 @@ export async function getMedicineDetails(name: string): Promise<Medicine | null>
     // Generate active ingredient based on the name
     const activeIngredient = sanitizedName.split(' ')[0] + 'mide';
     
-    // Create a mock medicine object
+    // Generate stock information
+    const inStock = Math.random() > 0.2; // 80% chance of being in stock
+    const stockCount = inStock ? Math.floor(Math.random() * 100) + 1 : 0;
+    
+    // Create medicine object with stock info
     const medicine: Medicine = {
       id: hashCode,
       name: name,
@@ -120,7 +124,9 @@ export async function getMedicineDetails(name: string): Promise<Medicine | null>
       dosage: 'As directed by physician',
       activeIngredient: activeIngredient,
       imageUrl: `https://onemg.gumlet.io/a_ignore,w_380,h_380,c_fit,q_auto,f_auto/c2a0598f-a7c8-48ec-9bf9-47ac3d73b153.jpg`,
-      availableAt: ['Apollo Pharmacy', 'MedPlus', 'NetMeds']
+      availableAt: ['Apollo Pharmacy', 'MedPlus', 'NetMeds'],
+      inStock: inStock,
+      stockCount: stockCount
     };
     
     return medicine;

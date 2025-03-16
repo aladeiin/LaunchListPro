@@ -1,10 +1,15 @@
 import { spawn } from 'child_process';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 console.log('Starting medicine data import process...');
 console.log('This will import data from the large Indian medicine dataset.');
 console.log('The process may take some time, please be patient.');
 console.log('------------------------------------------------');
+
+// Get the current file path for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Path to the import script
 const importScriptPath = path.resolve(__dirname, './import-medicine-data.ts');
