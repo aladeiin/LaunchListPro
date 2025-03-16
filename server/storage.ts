@@ -119,68 +119,188 @@ export class MemStorage implements IStorage {
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }
 
-  // Initialize with some sample medicine data
+  // Initialize with medicine data from Indian dataset
   private initMedicineData() {
     const medicines: InsertMedicine[] = [
       {
-        name: "Lipitor",
-        genericName: "Atorvastatin",
-        description: "Lipitor is a statin medication used to treat high cholesterol and to lower the risk of stroke, heart attack, and other heart complications.",
-        manufacturer: "Pfizer",
+        name: "Augmentin 625 Duo Tablet",
+        genericName: "Amoxycillin + Clavulanic Acid",
+        description: "Augmentin 625 Duo Tablet is a combination of two medicines: Amoxycillin and Clavulanic Acid. It is used to treat bacterial infections like sinusitis, pneumonia, ear infections, urinary tract infections, and skin infections.",
+        manufacturer: "Glaxo SmithKline Pharmaceuticals Ltd",
         isGeneric: false,
-        price: 165.99,
-        dosage: "10mg, 30 tablets",
-        activeIngredient: "Atorvastatin Calcium",
+        price: 223.42,
+        dosage: "Strip of 10 tablets",
+        activeIngredient: "Amoxycillin (500mg), Clavulanic Acid (125mg)",
         imageUrl: "",
-        availableAt: ["CVS", "Walgreens", "Rite Aid"]
+        availableAt: []
       },
       {
-        name: "Atorvastatin Calcium",
-        genericName: "Atorvastatin",
-        description: "Generic version of Lipitor used to treat high cholesterol and to lower the risk of stroke, heart attack, and other heart complications.",
-        manufacturer: "Various",
-        isGeneric: true,
-        price: 14.99,
-        dosage: "10mg, 30 tablets",
-        activeIngredient: "Atorvastatin Calcium",
-        imageUrl: "",
-        availableAt: ["Walgreens", "CVS", "Walmart Pharmacy"]
-      },
-      {
-        name: "Crestor",
-        genericName: "Rosuvastatin",
-        description: "Crestor is a statin medication used to treat high cholesterol and prevent cardiovascular disease.",
-        manufacturer: "AstraZeneca",
+        name: "Azithral 500 Tablet",
+        genericName: "Azithromycin",
+        description: "Azithral 500 Tablet is an antibiotic medicine used to treat many different types of infections caused by bacteria such as respiratory infections, skin infections, ear infections, and sexually transmitted diseases.",
+        manufacturer: "Alembic Pharmaceuticals Ltd",
         isGeneric: false,
-        price: 112.99,
-        dosage: "5mg, 30 tablets",
-        activeIngredient: "Rosuvastatin Calcium",
+        price: 132.36,
+        dosage: "Strip of 5 tablets",
+        activeIngredient: "Azithromycin (500mg)",
         imageUrl: "",
-        availableAt: ["CVS", "Rite Aid"]
+        availableAt: []
       },
       {
-        name: "Advil",
-        genericName: "Ibuprofen",
-        description: "Advil is a nonsteroidal anti-inflammatory drug used to treat pain, fever, and inflammation.",
-        manufacturer: "Pfizer",
+        name: "Ascoril LS Syrup",
+        genericName: "Ambroxol + Levosalbutamol",
+        description: "Ascoril LS Syrup is a combination medicine used in the treatment of cough with mucus. It thins mucus in the nose, windpipe and lungs, making it easier to cough out.",
+        manufacturer: "Glenmark Pharmaceuticals Ltd",
         isGeneric: false,
-        price: 9.99,
-        dosage: "200mg, 50 tablets",
-        activeIngredient: "Ibuprofen",
+        price: 118,
+        dosage: "Bottle of 100 ml Syrup",
+        activeIngredient: "Ambroxol (30mg/5ml), Levosalbutamol (1mg/5ml)",
         imageUrl: "",
-        availableAt: ["Walgreens", "CVS", "Walmart Pharmacy", "Rite Aid"]
+        availableAt: []
       },
       {
-        name: "Ibuprofen",
-        genericName: "Ibuprofen",
-        description: "Generic ibuprofen is a nonsteroidal anti-inflammatory drug used to treat pain, fever, and inflammation.",
-        manufacturer: "Various",
-        isGeneric: true,
-        price: 4.99,
-        dosage: "200mg, 50 tablets",
-        activeIngredient: "Ibuprofen",
+        name: "Allegra 120mg Tablet",
+        genericName: "Fexofenadine",
+        description: "Allegra 120mg Tablet is an antiallergic medication used in the treatment of allergic symptoms such as runny nose, watery eyes, sneezing, hives, and other nasal allergies.",
+        manufacturer: "Sanofi India Ltd",
+        isGeneric: false,
+        price: 218.81,
+        dosage: "Strip of 10 tablets",
+        activeIngredient: "Fexofenadine (120mg)",
         imageUrl: "",
-        availableAt: ["Walgreens", "CVS", "Walmart Pharmacy", "Rite Aid"]
+        availableAt: []
+      },
+      {
+        name: "Avil 25 Tablet",
+        genericName: "Pheniramine",
+        description: "Avil 25 Tablet is an antiallergic medication used in the treatment of various allergic conditions such as allergic rhinitis, insect bites, and other allergic reactions.",
+        manufacturer: "Sanofi India Ltd",
+        isGeneric: false,
+        price: 10.96,
+        dosage: "Strip of 15 tablets",
+        activeIngredient: "Pheniramine (25mg)",
+        imageUrl: "",
+        availableAt: []
+      },
+      {
+        name: "Allegra-M Tablet",
+        genericName: "Montelukast + Fexofenadine",
+        description: "Allegra-M Tablet is a combination of two medicines used in the treatment of allergic symptoms such as runny nose, sneezing, and hives. It relieves allergy symptoms by blocking the action of certain chemical messengers.",
+        manufacturer: "Sanofi India Ltd",
+        isGeneric: false,
+        price: 241.48,
+        dosage: "Strip of 10 tablets",
+        activeIngredient: "Montelukast (10mg), Fexofenadine (120mg)",
+        imageUrl: "",
+        availableAt: []
+      },
+      {
+        name: "Amoxyclav 625 Tablet",
+        genericName: "Amoxycillin + Clavulanic Acid",
+        description: "Amoxyclav 625 Tablet is a combination of two medicines: Amoxycillin and Clavulanic Acid. It is used to treat bacterial infections like sinusitis, pneumonia, ear infections, urinary tract infections, and skin infections.",
+        manufacturer: "Abbott",
+        isGeneric: false,
+        price: 223.27,
+        dosage: "Strip of 10 tablets",
+        activeIngredient: "Amoxycillin (500mg), Clavulanic Acid (125mg)",
+        imageUrl: "",
+        availableAt: []
+      },
+      {
+        name: "Azee 500 Tablet",
+        genericName: "Azithromycin",
+        description: "Azee 500 Tablet is an antibiotic medicine used to treat many different types of infections caused by bacteria such as respiratory infections, skin infections, ear infections, and sexually transmitted diseases.",
+        manufacturer: "Cipla Ltd",
+        isGeneric: false,
+        price: 132.38,
+        dosage: "Strip of 5 tablets",
+        activeIngredient: "Azithromycin (500mg)",
+        imageUrl: "",
+        availableAt: []
+      },
+      {
+        name: "Atarax 25mg Tablet",
+        genericName: "Hydroxyzine",
+        description: "Atarax 25mg Tablet is an antihistamine medicine used in the treatment of allergic conditions such as allergic rhinitis, urticaria, atopic dermatitis, and anxiety.",
+        manufacturer: "Dr Reddy's Laboratories Ltd",
+        isGeneric: false,
+        price: 85.5,
+        dosage: "Strip of 15 tablets",
+        activeIngredient: "Hydroxyzine (25mg)",
+        imageUrl: "",
+        availableAt: []
+      },
+      {
+        name: "Ascoril D Plus Syrup Sugar Free",
+        genericName: "Phenylephrine + Chlorpheniramine Maleate",
+        description: "Ascoril D Plus Syrup is a combination medicine used to treat cough with mucus. It thins mucus in the nose, windpipe and lungs, making it easier to cough out.",
+        manufacturer: "Glenmark Pharmaceuticals Ltd",
+        isGeneric: false,
+        price: 129,
+        dosage: "Bottle of 100 ml Syrup",
+        activeIngredient: "Phenylephrine (5mg), Chlorpheniramine Maleate (2mg)",
+        imageUrl: "",
+        availableAt: []
+      },
+      {
+        name: "Aciloc 150 Tablet",
+        genericName: "Ranitidine",
+        description: "Aciloc 150 Tablet is a medicine that reduces the amount of acid produced in your stomach. It is used for treating acid-related diseases of the stomach and intestine such as heartburn, acid reflux, etc.",
+        manufacturer: "Cadila Pharmaceuticals Ltd",
+        isGeneric: false,
+        price: 40.94,
+        dosage: "Strip of 30 tablets",
+        activeIngredient: "Ranitidine (150mg)",
+        imageUrl: "",
+        availableAt: []
+      },
+      {
+        name: "Alex Syrup",
+        genericName: "Phenylephrine + Chlorpheniramine Maleate",
+        description: "Alex Syrup is a combination medicine used to treat cough with mucus. It thins mucus in the nose, windpipe and lungs, making it easier to cough out.",
+        manufacturer: "Glenmark Pharmaceuticals Ltd",
+        isGeneric: false,
+        price: 129,
+        dosage: "Bottle of 100 ml Syrup",
+        activeIngredient: "Phenylephrine (5mg/5ml), Chlorpheniramine Maleate (2mg/5ml)",
+        imageUrl: "",
+        availableAt: []
+      },
+      {
+        name: "Anovate Cream",
+        genericName: "Phenylephrine + Beclometasone",
+        description: "Anovate Cream is a combination medicine used to treat hemorrhoids (piles) and anal fissures. It relieves the pain, swelling, bleeding and itching by reducing the inflammation.",
+        manufacturer: "USV Ltd",
+        isGeneric: false,
+        price: 134.2,
+        dosage: "Tube of 20 gm Cream",
+        activeIngredient: "Phenylephrine (0.10% w/w), Beclometasone (0.025% w/w)",
+        imageUrl: "",
+        availableAt: []
+      },
+      {
+        name: "Augmentin Duo Oral Suspension",
+        genericName: "Amoxycillin + Clavulanic Acid",
+        description: "Augmentin Duo Oral Suspension is a combination of two medicines: Amoxycillin and Clavulanic Acid. It is used to treat bacterial infections like sinusitis, pneumonia, ear infections, urinary tract infections, and skin infections.",
+        manufacturer: "Glaxo SmithKline Pharmaceuticals Ltd",
+        isGeneric: false,
+        price: 67.2,
+        dosage: "Bottle of 30 ml Oral Suspension",
+        activeIngredient: "Amoxycillin (200mg), Clavulanic Acid (28.5mg)",
+        imageUrl: "",
+        availableAt: []
+      },
+      {
+        name: "Ambrodil-S Syrup",
+        genericName: "Ambroxol + Salbutamol",
+        description: "Ambrodil-S Syrup is a combination medicine used in the treatment of cough with mucus. It thins mucus in the nose, windpipe and lungs, making it easier to cough out.",
+        manufacturer: "Aristo Pharmaceuticals Pvt Ltd",
+        isGeneric: false,
+        price: 30.2,
+        dosage: "Bottle of 100 ml Syrup",
+        activeIngredient: "Ambroxol (15mg/5ml), Salbutamol (1mg/5ml)",
+        imageUrl: "",
+        availableAt: []
       }
     ];
 

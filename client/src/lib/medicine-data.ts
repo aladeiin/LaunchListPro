@@ -5,11 +5,10 @@ export const calculateSavings = (originalPrice: number, alternativePrice: number
 };
 
 export const formatPrice = (price: number): string => {
-  return price.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2
-  });
+  return `₹${price.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`;
 };
 
 export const filterMedicinesByPrice = (
@@ -44,8 +43,10 @@ export interface PharmacyPrice {
 
 export const getMockPharmacyPrices = (medicine: Medicine): PharmacyPrice[] => {
   const basePrice = medicine.price;
+  const indianPharmacies = ["Apollo Pharmacy", "MedPlus", "Netmeds", "PharmEasy", "1mg"];
   
-  return medicine.availableAt.map(pharmacy => {
+  // Since all items are out of stock, return a default set of pharmacy prices
+  return indianPharmacies.map(pharmacy => {
     // Generate slight variations in price for different pharmacies
     const variation = (Math.random() * 0.2) - 0.1; // -10% to +10%
     const price = basePrice * (1 + variation);
