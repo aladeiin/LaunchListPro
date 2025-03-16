@@ -52,21 +52,6 @@ export default function AlternativeCard({ alternative, originalMedicine }: Alter
                 </span>
               )}
             </div>
-            
-            <div className="mt-2">
-              {alternative.inStock ? (
-                <Badge className="flex items-center bg-green-100 text-green-800 hover:bg-green-200">
-                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                  In Stock
-                  {alternative.stockCount > 0 && <span className="ml-1">({alternative.stockCount})</span>}
-                </Badge>
-              ) : (
-                <Badge className="flex items-center bg-red-100 text-red-800 hover:bg-red-200">
-                  <XCircle className="h-3.5 w-3.5 mr-1" />
-                  Out of Stock
-                </Badge>
-              )}
-            </div>
           </div>
 
           <div className="flex flex-col md:items-end gap-2">
