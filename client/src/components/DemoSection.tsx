@@ -90,8 +90,8 @@ export default function DemoSection() {
                   />
                 </div>
                 <div className="flex justify-between text-sm text-slate-500 mt-1">
-                  <span>$0</span>
-                  <span>$100+</span>
+                  <span>₹0</span>
+                  <span>₹100+</span>
                 </div>
               </div>
               

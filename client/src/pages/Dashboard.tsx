@@ -172,8 +172,8 @@ export default function Dashboard() {
                     />
                   </div>
                   <div className="flex justify-between text-sm text-slate-500 mt-1">
-                    <span>$0</span>
-                    <span>${priceRange[0]}+</span>
+                    <span>₹0</span>
+                    <span>₹{priceRange[0]}+</span>
                   </div>
                 </div>
                 
@@ -236,8 +236,8 @@ export default function Dashboard() {
                       />
                     </div>
                     <div className="flex justify-between text-sm text-slate-500 mt-1">
-                      <span>$0</span>
-                      <span>${priceRange[0]}+</span>
+                      <span>₹0</span>
+                      <span>₹{priceRange[0]}+</span>
                     </div>
                   </div>
                   
@@ -383,7 +383,7 @@ export default function Dashboard() {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <div className="text-lg font-bold">${medicine.price.toFixed(2)}</div>
+                                  <div className="text-lg font-bold">₹{medicine.price.toFixed(2)}</div>
                                   <div className="flex items-center text-xs text-slate-500 justify-end mt-1">
                                     <Store className="h-3 w-3 mr-1" />
                                     <span>{medicine.availableAt.length} pharmacies</span>
