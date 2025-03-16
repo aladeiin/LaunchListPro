@@ -20,7 +20,7 @@ export default function HeroSection() {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-sans leading-tight mb-6 transition-colors">
+            <h1 className="text-4xl md:text-5xl font-bold text-white font-sans leading-tight mb-6 transition-colors">
               Find Affordable <span className="text-primary dark:text-primary">Medicine Alternatives</span> in Seconds
             </h1>
             <p className="text-lg text-slate-700 dark:text-slate-300 mb-8 transition-colors">
