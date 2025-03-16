@@ -69,12 +69,13 @@ export default function ChatInterface() {
       });
     },
     onSuccess: (response) => {
+      console.log("Chat API response:", response);
       // Add the AI response to the messages
       setMessages((prev) => [
         ...prev,
         {
           id: uuidv4(),
-          message: response.message?.message || "I apologize, but I couldn't process your request at this time.",
+          message: response.response || response.message?.message || "I apologize, but I couldn't process your request at this time.",
           isUserMessage: false,
         },
       ]);

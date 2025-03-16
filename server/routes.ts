@@ -56,7 +56,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chat routes
   apiRouter.post("/chat", async (req: Request, res: Response) => {
     try {
+      console.log("[CHAT] Request body:", JSON.stringify(req.body));
       const validatedData = insertChatMessageSchema.parse(req.body);
+      console.log("[CHAT] Validated data:", JSON.stringify(validatedData));
       
       // Store user message
       await storage.createChatMessage({
@@ -65,7 +67,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Get response from OpenAI
+      console.log("[CHAT] Getting response from OpenAI...");
       const response = await getChatResponse(validatedData.message);
+      console.log("[CHAT] OpenAI response received");
       
       // Store AI response
       const chatMessage = await storage.createChatMessage({
@@ -74,12 +78,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isUserMessage: false
       });
       
+      console.log("[CHAT] Sending response back to client");
       res.status(201).json({ message: chatMessage, response: response });
     } catch (error) {
+      console.error("[CHAT] Error in chat route:", error);
       if (error instanceof z.ZodError) {
+        console.error("[CHAT] Validation error details:", error.errors);
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Server error", error: String(error) });
     }
   });
 

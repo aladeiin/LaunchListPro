@@ -113,8 +113,13 @@ export async function getChatResponse(userMessage: string): Promise<string> {
   let apiCallCount = 0;
   const maxRetries = 1;
   
+  console.log("[OPENAI-CHAT] User message:", userMessage);
+  console.log("[OPENAI-CHAT] API Key exists:", process.env.OPENAI_API_KEY ? "Yes (length: " + process.env.OPENAI_API_KEY.length + ")" : "No");
+  
   while (apiCallCount <= maxRetries) {
     try {
+      console.log("[OPENAI-CHAT] Attempt", apiCallCount + 1, "sending request to OpenAI");
+      
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -130,13 +135,18 @@ export async function getChatResponse(userMessage: string): Promise<string> {
         ]
       });
 
+      console.log("[OPENAI-CHAT] Received response from OpenAI");
+      
       const content = response.choices[0].message.content;
       if (!content) {
         throw new Error("Empty response from OpenAI");
       }
-      return content + "\n\n(Note: This information is for educational purposes only. Always consult a healthcare professional for medical advice.)";
+      const finalResponse = content + "\n\n(Note: This information is for educational purposes only. Always consult a healthcare professional for medical advice.)";
+      console.log("[OPENAI-CHAT] Final response (truncated):", finalResponse.substring(0, 100) + "...");
+      return finalResponse;
     } catch (error) {
-      console.error("Error getting chat response:", error);
+      console.error("[OPENAI-CHAT] Error getting chat response:", error);
+      console.error("[OPENAI-CHAT] Error details:", JSON.stringify(error, null, 2));
       apiCallCount++;
       
       // Check if it's a rate limit error
@@ -146,6 +156,7 @@ export async function getChatResponse(userMessage: string): Promise<string> {
           errorMessage.includes("quota exceeded") ||
           errorMessage.includes("insufficient_quota")) {
         
+        console.log("[OPENAI-CHAT] Rate limit detected, using fallback response");
         // Select a random fallback response
         const randomIndex = Math.floor(Math.random() * FALLBACK_RESPONSES.length);
         return FALLBACK_RESPONSES[randomIndex] + 
@@ -154,15 +165,18 @@ export async function getChatResponse(userMessage: string): Promise<string> {
       
       // If we've tried our max retries, send a general error message
       if (apiCallCount > maxRetries) {
+        console.log("[OPENAI-CHAT] Max retries reached, returning error message");
         return "I'm sorry, I'm having trouble processing your request at the moment. Our systems are experiencing high demand. Please try again in a few minutes.\n\n(Note: For specific medical advice, please consult a healthcare professional.)";
       }
       
       // If it's another type of error and we haven't reached max retries, try again
+      console.log("[OPENAI-CHAT] Will retry in 1 second");
       // Small delay before retry
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
   
   // Fallback if loop exits unexpectedly
+  console.log("[OPENAI-CHAT] Unexpected exit from retry loop, returning general error");
   return "I'm sorry, I'm having trouble processing your request at the moment. Please try again later.";
 }
