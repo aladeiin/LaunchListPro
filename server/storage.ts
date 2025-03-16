@@ -49,7 +49,16 @@ export class MemStorage implements IStorage {
   async createWaitlistUser(insertUser: InsertWaitlistUser): Promise<WaitlistUser> {
     const id = this.waitlistUserCurrentId++;
     const createdAt = new Date().toISOString();
-    const user: WaitlistUser = { ...insertUser, id, createdAt };
+    
+    // Ensure all required fields are present
+    const user: WaitlistUser = { 
+      ...insertUser, 
+      id, 
+      createdAt,
+      reason: insertUser.reason || "",
+      agreedToTerms: insertUser.agreedToTerms === undefined ? false : insertUser.agreedToTerms
+    };
+    
     this.waitlistUsers.set(id, user);
     return user;
   }
@@ -177,7 +186,13 @@ export class MemStorage implements IStorage {
 
     for (const medicine of medicines) {
       const id = this.medicineCurrentId++;
-      this.medicines.set(id, { ...medicine, id });
+      // Ensure all required fields are present
+      this.medicines.set(id, { 
+        ...medicine, 
+        id,
+        imageUrl: medicine.imageUrl || "",
+        availableAt: medicine.availableAt || []
+      });
     }
   }
 }

@@ -56,7 +56,9 @@ export type InsertWaitlistUser = z.infer<typeof insertWaitlistUserSchema>;
 export type WaitlistUser = typeof waitlistUsers.$inferSelect;
 
 export type InsertMedicine = z.infer<typeof insertMedicineSchema>;
-export type Medicine = typeof medicines.$inferSelect;
+export type Medicine = typeof medicines.$inferSelect & {
+  similarityScore?: number;
+};
 
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
