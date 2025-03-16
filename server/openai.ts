@@ -1,7 +1,11 @@
 import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 60000, // 60 second timeout
+  maxRetries: 2    // Retry API calls twice
+});
 
 interface MedicationInfo {
   description: string;
@@ -109,74 +113,76 @@ const FALLBACK_RESPONSES = [
 ];
 
 export async function getChatResponse(userMessage: string): Promise<string> {
-  // Rate limiting protection: if we detect specific phrases in the error message, use fallback responses
-  let apiCallCount = 0;
-  const maxRetries = 1;
-  
   console.log("[OPENAI-CHAT] User message:", userMessage);
   console.log("[OPENAI-CHAT] API Key exists:", process.env.OPENAI_API_KEY ? "Yes (length: " + process.env.OPENAI_API_KEY.length + ")" : "No");
   
-  while (apiCallCount <= maxRetries) {
-    try {
-      console.log("[OPENAI-CHAT] Attempt", apiCallCount + 1, "sending request to OpenAI");
-      
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are PharmAssist, a helpful pharmacy assistant AI that can answer questions about medications, their uses, side effects, and alternatives. Provide accurate, concise information based on publicly available medical data. Always clarify that you're not providing medical advice, and users should consult healthcare professionals for personalized guidance. When discussing medication alternatives or substitutes, always include price comparison information with the original medication (for example, '50% cheaper' or 'costs about ₹120 compared to ₹240 for the brand name'). Focus on factual information about different options, including potential cost savings, without making specific recommendations."
-          },
-          {
-            role: "user",
-            content: userMessage,
-          },
-        ]
-      });
-
-      console.log("[OPENAI-CHAT] Received response from OpenAI");
-      
-      const content = response.choices[0].message.content;
-      if (!content) {
-        throw new Error("Empty response from OpenAI");
-      }
-      const finalResponse = content + "\n\n(Note: This information is for educational purposes only. Always consult a healthcare professional for medical advice.)";
-      console.log("[OPENAI-CHAT] Final response (truncated):", finalResponse.substring(0, 100) + "...");
-      return finalResponse;
-    } catch (error) {
-      console.error("[OPENAI-CHAT] Error getting chat response:", error);
-      console.error("[OPENAI-CHAT] Error details:", JSON.stringify(error, null, 2));
-      apiCallCount++;
-      
-      // Check if it's a rate limit error
-      const errorMessage = String(error);
-      if (errorMessage.includes("429") || 
-          errorMessage.includes("rate limit") || 
-          errorMessage.includes("quota exceeded") ||
-          errorMessage.includes("insufficient_quota")) {
-        
-        console.log("[OPENAI-CHAT] Rate limit detected, using fallback response");
-        // Select a random fallback response
-        const randomIndex = Math.floor(Math.random() * FALLBACK_RESPONSES.length);
-        return FALLBACK_RESPONSES[randomIndex] + 
-               "\n\n(Note: Our AI service is currently experiencing high demand. This is a general response. For specific medical advice, please consult a healthcare professional.)";
-      }
-      
-      // If we've tried our max retries, send a general error message
-      if (apiCallCount > maxRetries) {
-        console.log("[OPENAI-CHAT] Max retries reached, returning error message");
-        return "I'm sorry, I'm having trouble processing your request at the moment. Our systems are experiencing high demand. Please try again in a few minutes.\n\n(Note: For specific medical advice, please consult a healthcare professional.)";
-      }
-      
-      // If it's another type of error and we haven't reached max retries, try again
-      console.log("[OPENAI-CHAT] Will retry in 1 second");
-      // Small delay before retry
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
+  // Sanitize and validate user input
+  if (!userMessage || typeof userMessage !== 'string' || userMessage.trim().length === 0) {
+    console.log("[OPENAI-CHAT] Invalid or empty user message");
+    return "I'm sorry, I couldn't understand your question. Could you please ask again with more details?";
   }
   
-  // Fallback if loop exits unexpectedly
-  console.log("[OPENAI-CHAT] Unexpected exit from retry loop, returning general error");
-  return "I'm sorry, I'm having trouble processing your request at the moment. Please try again later.";
+  const sanitizedMessage = userMessage.trim().substring(0, 1000); // Limit message length to 1000 characters
+  console.log("[OPENAI-CHAT] Sanitized message length:", sanitizedMessage.length);
+  
+  try {
+    console.log("[OPENAI-CHAT] Sending request to OpenAI");
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are PharmAssist, a helpful pharmacy assistant AI that can answer questions about medications, their uses, side effects, and alternatives. Provide accurate, concise information based on publicly available medical data. Always clarify that you're not providing medical advice, and users should consult healthcare professionals for personalized guidance. When discussing medication alternatives or substitutes, always include price comparison information with the original medication (for example, '50% cheaper' or 'costs about ₹120 compared to ₹240 for the brand name'). Focus on factual information about different options, including potential cost savings, without making specific recommendations."
+        },
+        {
+          role: "user",
+          content: sanitizedMessage,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+      // OpenAI client will handle retries automatically based on the configuration we set
+    });
+
+    console.log("[OPENAI-CHAT] Received response from OpenAI");
+    
+    const content = response.choices[0].message.content;
+    if (!content) {
+      console.error("[OPENAI-CHAT] Empty response content from OpenAI");
+      throw new Error("Empty response from OpenAI");
+    }
+    
+    const finalResponse = content + "\n\n(Note: This information is for educational purposes only. Always consult a healthcare professional for medical advice.)";
+    console.log("[OPENAI-CHAT] Final response (truncated):", finalResponse.substring(0, 100) + "...");
+    return finalResponse;
+    
+  } catch (error) {
+    console.error("[OPENAI-CHAT] Error getting chat response:", error);
+    
+    try {
+      // Attempt to log structured error details
+      console.error("[OPENAI-CHAT] Error details:", JSON.stringify(error, null, 2));
+    } catch (jsonError) {
+      console.error("[OPENAI-CHAT] Could not stringify error:", jsonError);
+    }
+    
+    // Check if it's a rate limit error
+    const errorMessage = String(error);
+    if (errorMessage.includes("429") || 
+        errorMessage.includes("rate limit") || 
+        errorMessage.includes("quota exceeded") ||
+        errorMessage.includes("insufficient_quota")) {
+      
+      console.log("[OPENAI-CHAT] Rate limit detected, using fallback response");
+      // Select a random fallback response
+      const randomIndex = Math.floor(Math.random() * FALLBACK_RESPONSES.length);
+      return FALLBACK_RESPONSES[randomIndex] + 
+             "\n\n(Note: Our AI service is currently experiencing high demand. This is a general response. For specific medical advice, please consult a healthcare professional.)";
+    }
+    
+    // Return a general error message for any other type of error
+    return "I'm sorry, I'm having trouble processing your request at the moment. Our systems are experiencing high demand. Please try again in a few minutes.\n\n(Note: For specific medical advice, please consult a healthcare professional.)";
+  }
 }

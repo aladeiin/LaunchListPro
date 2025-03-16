@@ -66,14 +66,20 @@ export default function ChatInterface() {
         isUserMessage: true,
       });
       
-      return apiRequest('/api/chat', {
-        method: 'POST',
-        body: JSON.stringify({
-          userId,
-          message: newMessage,
-          isUserMessage: true,
-        }),
-      });
+      try {
+        const result = await apiRequest('/api/chat', {
+          method: 'POST',
+          body: JSON.stringify({
+            userId,
+            message: newMessage,
+            isUserMessage: true,
+          }),
+        });
+        return result;
+      } catch (error) {
+        console.error("Error sending chat message:", error);
+        throw error;
+      }
     },
     onSuccess: (response) => {
       console.log("Chat API response:", response);
@@ -100,6 +106,19 @@ export default function ChatInterface() {
       
       // Invalidate the chat history query to refresh the data
       queryClient.invalidateQueries({ queryKey: ['/api/chat', userId] });
+    },
+    onError: (error) => {
+      console.error("Error in chat mutation:", error);
+      
+      // Add a friendly error message to the chat
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uuidv4(),
+          message: "I'm sorry, I couldn't process your request at the moment. The service might be experiencing high demand. Please try again in a few moments or ask a different question.",
+          isUserMessage: false,
+        },
+      ]);
     },
   });
 
