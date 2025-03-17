@@ -127,8 +127,8 @@ export default function MedicineDetail({ medicineName }: MedicineDetailProps) {
   const originalMedicine = alternativesData?.originalMedicine || medicine;
 
   // Calculate savings for alternatives if the API hasn't already done so
-  const alternativesWithSavings = alternatives.map((alt) => {
-    if (alt.savingsPercentage !== undefined) return alt;
+  const alternativesWithSavings = alternatives.map((alt: Medicine) => {
+    if ('savingsPercentage' in alt && alt.savingsPercentage !== undefined) return alt;
     return {
       ...alt,
       savingsPercentage: calculateSavings(originalMedicine?.price || 0, alt.price),
@@ -298,7 +298,7 @@ export default function MedicineDetail({ medicineName }: MedicineDetailProps) {
                   </div>
 
                   <div className="space-y-4">
-                    {alternativesWithSavings.map((alternative) => (
+                    {alternativesWithSavings.map((alternative: Medicine & { savingsPercentage: number }) => (
                       <AlternativeCard
                         key={alternative.id}
                         alternative={alternative}
@@ -464,7 +464,7 @@ export default function MedicineDetail({ medicineName }: MedicineDetailProps) {
                       <h4 className="font-medium mb-3">Side Effects</h4>
                       {sideEffects.length > 0 ? (
                         <ul className="space-y-2 list-disc pl-5">
-                          {sideEffects.map((effect, index) => (
+                          {sideEffects.map((effect: string, index: number) => (
                             <li key={index} className="text-sm">{effect}</li>
                           ))}
                         </ul>
@@ -477,7 +477,7 @@ export default function MedicineDetail({ medicineName }: MedicineDetailProps) {
                       <h4 className="font-medium mb-3">Drug Interactions</h4>
                       {interactions.length > 0 ? (
                         <ul className="space-y-2 list-disc pl-5">
-                          {interactions.map((interaction, index) => (
+                          {interactions.map((interaction: string, index: number) => (
                             <li key={index} className="text-sm">{interaction}</li>
                           ))}
                         </ul>
