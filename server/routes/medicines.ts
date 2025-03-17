@@ -57,8 +57,41 @@ medicinesRouter.get("/search", async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Query parameter "q" is required' });
     }
     
-    const medicines = await storage.searchMedicines(q);
-    res.json(medicines);
+    // Parse pagination parameters
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+    const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+    
+    // Validate pagination parameters
+    const validLimit = Math.min(Math.max(1, limit), 100); // Between 1 and 100
+    const validPage = Math.max(1, page); // At least 1
+    
+    // Get search results
+    const searchResults = await storage.searchMedicines(q);
+    
+    // Calculate start and end indices
+    const startIndex = (validPage - 1) * validLimit;
+    const endIndex = startIndex + validLimit;
+    
+    // Get paginated search results
+    const paginatedResults = searchResults.slice(startIndex, endIndex);
+    
+    // Calculate total pages
+    const totalResults = searchResults.length;
+    const totalPages = Math.ceil(totalResults / validLimit);
+    
+    // Return paginated results with metadata
+    res.json({
+      data: paginatedResults,
+      pagination: {
+        total: totalResults,
+        page: validPage,
+        limit: validLimit,
+        totalPages: totalPages,
+        hasNextPage: validPage < totalPages,
+        hasPrevPage: validPage > 1
+      },
+      query: q
+    });
   } catch (error) {
     console.error('Error searching medicines:', error);
     res.status(500).json({ error: 'Failed to search medicines' });
@@ -119,6 +152,14 @@ medicinesRouter.get("/:name/alternatives", async (req: Request, res: Response) =
       return res.status(400).json({ error: 'Medicine name is required' });
     }
     
+    // Parse pagination parameters
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+    const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+    
+    // Validate pagination parameters
+    const validLimit = Math.min(Math.max(1, limit), 100); // Between 1 and 100
+    const validPage = Math.max(1, page); // At least 1
+    
     // Get the original medicine to find its active ingredient
     const medicine = await storage.getMedicineByName(name);
     
@@ -135,7 +176,47 @@ medicinesRouter.get("/:name/alternatives", async (req: Request, res: Response) =
     // Sort alternatives by price (lowest first)
     const sortedAlternatives = filteredAlternatives.sort((a, b) => a.price - b.price);
     
-    res.json(sortedAlternatives);
+    // Calculate start and end indices
+    const startIndex = (validPage - 1) * validLimit;
+    const endIndex = startIndex + validLimit;
+    
+    // Get paginated alternatives
+    const paginatedAlternatives = sortedAlternatives.slice(startIndex, endIndex);
+    
+    // Add savings percentage to each alternative
+    const alternativesWithSavings = paginatedAlternatives.map(alt => {
+      const savingsAmount = medicine.price - alt.price;
+      const savingsPercentage = (savingsAmount / medicine.price) * 100;
+      return {
+        ...alt,
+        savingsPercentage: savingsPercentage > 0 ? Math.round(savingsPercentage) : 0
+      };
+    });
+    
+    // Calculate total pages
+    const totalAlternatives = sortedAlternatives.length;
+    const totalPages = Math.ceil(totalAlternatives / validLimit);
+    
+    // Return paginated results with metadata
+    res.json({
+      data: alternativesWithSavings,
+      originalMedicine: {
+        id: medicine.id,
+        name: medicine.name,
+        price: medicine.price,
+        activeIngredient: medicine.activeIngredient,
+        manufacturer: medicine.manufacturer,
+        isGeneric: medicine.isGeneric
+      },
+      pagination: {
+        total: totalAlternatives,
+        page: validPage,
+        limit: validLimit,
+        totalPages: totalPages,
+        hasNextPage: validPage < totalPages,
+        hasPrevPage: validPage > 1
+      }
+    });
   } catch (error) {
     console.error('Error fetching alternatives:', error);
     res.status(500).json({ error: 'Failed to fetch alternatives' });

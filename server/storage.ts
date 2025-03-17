@@ -98,13 +98,58 @@ export class MemStorage implements IStorage {
   }
 
   async searchMedicines(query: string): Promise<Medicine[]> {
-    query = query.toLowerCase();
-    return Array.from(this.medicines.values()).filter(
-      (medicine) => 
-        medicine.name.toLowerCase().includes(query) || 
-        medicine.genericName.toLowerCase().includes(query) || 
-        medicine.activeIngredient.toLowerCase().includes(query)
-    );
+    // If empty query, return empty array
+    if (!query) return [];
+    
+    // Calculate similarity score for better matching
+    const calculateSimilarity = (target: string, search: string): number => {
+      const targetLower = target.toLowerCase();
+      const searchLower = search.toLowerCase();
+      
+      // Exact match
+      if (targetLower === searchLower) return 1.0;
+      
+      // Contains match with word boundaries
+      const wordBoundaryRegex = new RegExp(`\\b${searchLower}\\b`);
+      if (wordBoundaryRegex.test(targetLower)) return 0.9;
+      
+      // Contains match
+      if (targetLower.includes(searchLower)) return 0.8;
+      
+      // Check if all words in the search are in the target
+      const searchWords = searchLower.split(/\s+/);
+      const allWordsMatch = searchWords.every(word => targetLower.includes(word));
+      if (allWordsMatch) return 0.7;
+      
+      // Check if any word in the search is in the target
+      const anyWordMatches = searchWords.some(word => targetLower.includes(word));
+      if (anyWordMatches) return 0.5;
+      
+      return 0.0;
+    };
+    
+    const lowerQuery = query.toLowerCase();
+    
+    // Get all medicines and calculate similarity scores
+    const medicinesWithScores = Array.from(this.medicines.values()).map(medicine => {
+      const nameScore = calculateSimilarity(medicine.name, lowerQuery);
+      const genericScore = calculateSimilarity(medicine.genericName, lowerQuery);
+      const manufacturerScore = calculateSimilarity(medicine.manufacturer, lowerQuery);
+      const ingredientScore = calculateSimilarity(medicine.activeIngredient, lowerQuery);
+      
+      // Get the highest score from the different fields
+      const similarityScore = Math.max(nameScore, genericScore, manufacturerScore, ingredientScore);
+      
+      return {
+        ...medicine,
+        similarityScore
+      };
+    });
+    
+    // Filter out medicines with zero similarity and sort by similarity score
+    return medicinesWithScores
+      .filter(medicine => medicine.similarityScore > 0)
+      .sort((a, b) => b.similarityScore - a.similarityScore);
   }
 
   async createMedicine(medicine: InsertMedicine): Promise<Medicine> {
