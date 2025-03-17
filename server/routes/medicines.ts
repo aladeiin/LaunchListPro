@@ -8,8 +8,40 @@ const medicinesRouter = Router();
 // GET /api/medicines
 medicinesRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const medicines = await storage.getMedicines();
-    res.json(medicines);
+    // Parse pagination parameters
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+    const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+    
+    // Validate pagination parameters
+    const validLimit = Math.min(Math.max(1, limit), 100); // Between 1 and 100
+    const validPage = Math.max(1, page); // At least 1
+    
+    // Get all medicines
+    const allMedicines = await storage.getMedicines();
+    
+    // Calculate start and end indices
+    const startIndex = (validPage - 1) * validLimit;
+    const endIndex = startIndex + validLimit;
+    
+    // Get paginated medicines
+    const paginatedMedicines = allMedicines.slice(startIndex, endIndex);
+    
+    // Calculate total pages
+    const totalMedicines = allMedicines.length;
+    const totalPages = Math.ceil(totalMedicines / validLimit);
+    
+    // Return paginated results with metadata
+    res.json({
+      data: paginatedMedicines,
+      pagination: {
+        total: totalMedicines,
+        page: validPage,
+        limit: validLimit,
+        totalPages: totalPages,
+        hasNextPage: validPage < totalPages,
+        hasPrevPage: validPage > 1
+      }
+    });
   } catch (error) {
     console.error('Error fetching medicines:', error);
     res.status(500).json({ error: 'Failed to fetch medicines' });

@@ -14,8 +14,9 @@ let totalRows = 0;
 let processedRows = 0;
 let successfulImports = 0;
 let failedImports = 0;
-let batchSize = 100;
+let batchSize = 25; // Reduced batch size for more manageable imports
 let currentBatch: InsertMedicine[] = [];
+let skippedDuplicates = 0;
 
 /**
  * Process a row from the CSV file and convert it to an InsertMedicine object
@@ -105,29 +106,47 @@ function processRow(row: Record<string, string>): InsertMedicine | null {
  * Process a batch of medicines
  */
 async function processBatch(batch: InsertMedicine[]): Promise<void> {
-  const promises = batch.map(async (medicine) => {
-    try {
-      // Check if the medicine already exists by name
-      const existingMedicine = await storage.getMedicineByName(medicine.name);
-      
-      if (existingMedicine) {
-        // Update existing medicine with new data
-        await storage.updateMedicineByName(medicine.name, medicine);
-        console.log(`Updated medicine: ${medicine.name}`);
-      } else {
-        // Create new medicine
-        await storage.createMedicine(medicine);
-        console.log(`Imported medicine: ${medicine.name}`);
+  // Process medicines in smaller chunks to prevent timeouts
+  const chunkSize = 10;
+  for (let i = 0; i < batch.length; i += chunkSize) {
+    const chunk = batch.slice(i, i + chunkSize);
+    
+    const promises = chunk.map(async (medicine) => {
+      try {
+        // Check if the medicine already exists by name
+        const existingMedicine = await storage.getMedicineByName(medicine.name);
+        
+        if (existingMedicine) {
+          // Check if data is mostly the same to avoid unnecessary updates
+          if (existingMedicine.price === medicine.price && 
+              existingMedicine.manufacturer === medicine.manufacturer && 
+              existingMedicine.activeIngredient === medicine.activeIngredient) {
+            // Skip update as it's essentially the same record
+            skippedDuplicates++;
+            return;
+          }
+          
+          // Update existing medicine with new data
+          await storage.updateMedicineByName(medicine.name, medicine);
+          console.log(`Updated medicine: ${medicine.name} (ID: ${existingMedicine.id})`);
+        } else {
+          // Create new medicine
+          const created = await storage.createMedicine(medicine);
+          console.log(`Created new medicine: ${medicine.name} (ID: ${created.id})`);
+        }
+        
+        successfulImports++;
+      } catch (error) {
+        console.error(`Failed to import medicine: ${medicine.name}`, error);
+        failedImports++;
       }
-      
-      successfulImports++;
-    } catch (error) {
-      console.error(`Failed to import medicine: ${medicine.name}`, error);
-      failedImports++;
-    }
-  });
+    });
 
-  await Promise.all(promises);
+    await Promise.all(promises);
+    
+    // Short delay to prevent server overload
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
 }
 
 /**
@@ -191,7 +210,9 @@ async function importMedicineData() {
   console.log(`Processed rows: ${processedRows}`);
   console.log(`Successfully imported: ${successfulImports}`);
   console.log(`Failed imports: ${failedImports}`);
+  console.log(`Skipped duplicates: ${skippedDuplicates}`);
   console.log(`Total time: ${elapsed.toFixed(2)} seconds`);
+  console.log(`Average processing speed: ${(processedRows / elapsed).toFixed(2)} records/second`);
 }
 
 // Run the import
