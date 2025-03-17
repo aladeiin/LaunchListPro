@@ -342,7 +342,7 @@ export default function Dashboard() {
                 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Medicine Distribution</CardTitle>
+                    <CardTitle className="text-lg">Generic vs Branded Market Share (Quantity)</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {isLoadingStats ? (
@@ -354,23 +354,153 @@ export default function Dashboard() {
                         <ResponsiveContainer width="100%" height={250}>
                           <PieChart>
                             <Pie
-                              data={statsData.medicineDistribution}
+                              data={statsData.medicineDistribution.filter(item => 
+                                item.name === 'Generic' || item.name === 'Branded'
+                              )}
                               cx="50%"
                               cy="50%"
-                              labelLine={false}
-                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                              labelLine={true}
+                              label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
                               outerRadius={80}
                               fill="#8884d8"
                               dataKey="value"
                             >
-                              {statsData.medicineDistribution.map((entry: any, index: number) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
+                              <Cell fill="#0088FE" /> {/* Generic */}
+                              <Cell fill="#FF8042" /> {/* Branded */}
                             </Pie>
                             <Tooltip formatter={(value) => [`${value}`, 'Count']} />
                             <Legend />
                           </PieChart>
                         </ResponsiveContainer>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Market Share by Value and Price Comparison */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Market Share by Value (Revenue in Crores ₹)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingStats ? (
+                      <div className="h-80 w-full flex items-center justify-center">
+                        <Skeleton className="h-64 w-full" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-72">
+                        <ResponsiveContainer width="100%" height={250}>
+                          <PieChart>
+                            <Pie
+                              data={statsData.marketShareByValue}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={true}
+                              label={({ name, value, percent }) => `${name}: ₹${value} Cr (${(percent * 100).toFixed(0)}%)`}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                            >
+                              <Cell fill="#0088FE" /> {/* Generic */}
+                              <Cell fill="#FF8042" /> {/* Branded */}
+                            </Pie>
+                            <Tooltip formatter={(value) => [`₹${value} Cr`, 'Revenue']} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Branded vs Generic Price Comparison (₹)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingStats ? (
+                      <div className="h-80 w-full flex items-center justify-center">
+                        <Skeleton className="h-64 w-full" />
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart 
+                          data={statsData.priceComparisonData}
+                          layout="vertical"
+                          margin={{ top: 20, right: 30, left: 40, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis dataKey="name" type="category" width={100} />
+                          <Tooltip formatter={(value) => [`₹${value}`, 'Price']} />
+                          <Legend />
+                          <Bar dataKey="branded" name="Branded Price" fill="#FF8042" />
+                          <Bar dataKey="generic" name="Generic Price" fill="#0088FE" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Prescription Cost Comparison */}
+              <div className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Prescription Cost Comparison</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingStats ? (
+                      <Skeleton className="h-64 w-full" />
+                    ) : (
+                      <div className="space-y-6">
+                        {statsData.prescriptionCostComparisons.map((prescription: any) => (
+                          <div key={prescription.id} className="border rounded-lg p-4">
+                            <div className="flex justify-between items-center mb-4">
+                              <h3 className="text-xl font-semibold">{prescription.name}</h3>
+                              <Badge className="text-sm bg-green-100 text-green-800 hover:bg-green-200">
+                                {prescription.savingsPercentage}% Savings
+                              </Badge>
+                            </div>
+                            
+                            <div className="overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Medicine</TableHead>
+                                    <TableHead>Quantity</TableHead>
+                                    <TableHead>Branded Price (₹)</TableHead>
+                                    <TableHead>Generic Price (₹)</TableHead>
+                                    <TableHead>Savings (₹)</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {prescription.medicines.map((medicine: any, index: number) => (
+                                    <TableRow key={index}>
+                                      <TableCell className="font-medium">{medicine.name}</TableCell>
+                                      <TableCell>{medicine.quantity}</TableCell>
+                                      <TableCell>{medicine.brandedPrice}</TableCell>
+                                      <TableCell>{medicine.genericPrice}</TableCell>
+                                      <TableCell className="text-green-600">
+                                        {medicine.brandedPrice - medicine.genericPrice}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                  <TableRow className="bg-muted/50">
+                                    <TableCell colSpan={2} className="font-bold">Total</TableCell>
+                                    <TableCell className="font-bold">₹{prescription.totalBranded}</TableCell>
+                                    <TableCell className="font-bold">₹{prescription.totalGeneric}</TableCell>
+                                    <TableCell className="font-bold text-green-600">
+                                      ₹{prescription.savings}
+                                    </TableCell>
+                                  </TableRow>
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </CardContent>
@@ -816,13 +946,72 @@ function getMockDashboardData(dateRange: string) {
       uniqueUsers: 800 + Math.floor(Math.random() * 400)
     })),
     
-    // Medicine distribution data for the pie chart
+    // Medicine distribution data for the pie chart (by count)
     medicineDistribution: [
       { name: 'Generic', value: 1430 },
       { name: 'Branded', value: 1020 },
       { name: 'Ayurvedic', value: 350 },
       { name: 'Homeopathic', value: 180 },
       { name: 'Other', value: 120 }
+    ],
+    
+    // Market share by value (revenue in crores INR)
+    marketShareByValue: [
+      { name: 'Generic', value: 58.7 },
+      { name: 'Branded', value: 142.3 }
+    ],
+    
+    // Price comparison data for branded vs generic drugs
+    priceComparisonData: [
+      { name: 'Paracetamol', branded: 35, generic: 12 },
+      { name: 'Amoxicillin', branded: 120, generic: 45 },
+      { name: 'Atorvastatin', branded: 240, generic: 75 },
+      { name: 'Metformin', branded: 180, generic: 60 },
+      { name: 'Losartan', branded: 160, generic: 55 },
+      { name: 'Omeprazole', branded: 140, generic: 40 },
+    ],
+    
+    // Prescription cost comparison examples
+    prescriptionCostComparisons: [
+      {
+        id: 1,
+        name: "Common Cold Treatment",
+        medicines: [
+          { name: "Ascodex LS", quantity: "1 bottle", brandedPrice: 145, genericPrice: 60 },
+          { name: "Clavam 625", quantity: "6 tablets", brandedPrice: 396, genericPrice: 180 },
+          { name: "Allegra-M", quantity: "1 strip (10 tablets)", brandedPrice: 175, genericPrice: 70 }
+        ],
+        totalBranded: 716,
+        totalGeneric: 310,
+        savings: 406,
+        savingsPercentage: 56.7
+      },
+      {
+        id: 2,
+        name: "Hypertension Monthly Medication",
+        medicines: [
+          { name: "Telma-H", quantity: "30 tablets", brandedPrice: 620, genericPrice: 240 },
+          { name: "Ecosprin 75", quantity: "30 tablets", brandedPrice: 25, genericPrice: 12 },
+          { name: "Atorva 10", quantity: "30 tablets", brandedPrice: 560, genericPrice: 180 }
+        ],
+        totalBranded: 1205,
+        totalGeneric: 432,
+        savings: 773,
+        savingsPercentage: 64.1
+      },
+      {
+        id: 3,
+        name: "Diabetes Management",
+        medicines: [
+          { name: "Glycomet 500 SR", quantity: "60 tablets", brandedPrice: 240, genericPrice: 96 },
+          { name: "Januvia 100", quantity: "30 tablets", brandedPrice: 1560, genericPrice: 620 },
+          { name: "Ecosprin 75", quantity: "30 tablets", brandedPrice: 25, genericPrice: 12 }
+        ],
+        totalBranded: 1825,
+        totalGeneric: 728,
+        savings: 1097,
+        savingsPercentage: 60.1
+      }
     ]
   };
 }
