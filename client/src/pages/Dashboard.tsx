@@ -354,7 +354,7 @@ export default function Dashboard() {
                         <ResponsiveContainer width="100%" height={250}>
                           <PieChart>
                             <Pie
-                              data={statsData.medicineDistribution.filter(item => 
+                              data={statsData.medicineDistribution.filter((item: any) => 
                                 item.name === 'Generic' || item.name === 'Branded'
                               )}
                               cx="50%"
