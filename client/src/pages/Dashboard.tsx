@@ -1,426 +1,978 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import MedicineCard from "@/components/MedicineCard";
-import AlternativeCard from "@/components/AlternativeCard";
+import SearchSection from "@/components/SearchSection";
 import ChatInterface from "@/components/ChatInterface";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Search, ChevronLeft, Store, Pill, Filter, Info } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { 
+  Search, 
+  ChevronLeft, 
+  Store, 
+  Pill, 
+  TrendingUp, 
+  TrendingDown, 
+  BellRing, 
+  Clock, 
+  Filter, 
+  ShoppingCart,
+  BarChart3,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  ArrowRight,
+  Home,
+  LayoutDashboard,
+  MessageCircle
+} from "lucide-react";
+
+import { PieChart, Pie, LineChart, Line, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const [location] = useLocation();
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [priceRange, setPriceRange] = useState([100]);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [selectedManufacturers, setSelectedManufacturers] = useState<string[]>([]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [dateRange, setDateRange] = useState("month");
   
-  // Parse search query from URL
-  useEffect(() => {
-    const params = new URLSearchParams(location.split('?')[1]);
-    const searchParam = params.get('search');
-    if (searchParam) {
-      setSearchTerm(searchParam);
-    }
-  }, [location]);
-  
-  // Fetch medicine data
-  const { data: searchResults, isLoading, isError } = useQuery({
-    queryKey: ['/api/medicines/search', searchTerm],
+  // Fetch statistics data for the dashboard
+  const { data: statsData, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['/api/statistics', dateRange],
     queryFn: async () => {
-      const res = await fetch(`/api/medicines/search?q=${encodeURIComponent(searchTerm)}`);
-      if (!res.ok) throw new Error('Failed to search medicines');
-      return res.json();
-    },
-    enabled: searchTerm.length > 0
-  });
-  
-  // Fetch alternatives if we have a selected medicine
-  const [selectedMedicine, setSelectedMedicine] = useState<number | null>(null);
-  const { data: alternativesData, isLoading: isLoadingAlternatives } = useQuery({
-    queryKey: ['/api/medicines', selectedMedicine, 'alternatives'],
-    queryFn: async () => {
-      if (!selectedMedicine) return null;
-      const medicine = searchResults.medicines.find((m: any) => m.id === selectedMedicine);
-      if (!medicine) return null;
-      
-      const res = await fetch(`/api/medicines/${medicine.name}/alternatives`);
-      if (!res.ok) throw new Error('Failed to fetch alternatives');
-      return res.json();
-    },
-    enabled: !!selectedMedicine && !!searchResults?.medicines
-  });
-  
-  const manufacturers = [
-    { id: "pfizer", label: "Pfizer" },
-    { id: "johnson", label: "Johnson & Johnson" },
-    { id: "bayer", label: "Bayer" },
-    { id: "various", label: "Various/Generic" }
-  ];
-  
-  const medicineTypes = [
-    { id: "generic", label: "Generic" },
-    { id: "brand", label: "Brand Name" }
-  ];
-  
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      setSelectedMedicine(null); // Reset selected medicine when searching
-    } else {
-      toast({
-        title: "Search Error",
-        description: "Please enter a medication name to search",
-        variant: "destructive"
-      });
+      try {
+        const res = await fetch(`/api/statistics?range=${dateRange}`);
+        if (!res.ok) {
+          // If API endpoint doesn't exist yet, return mock data for demo
+          return getMockDashboardData(dateRange);
+        }
+        return res.json();
+      } catch (error) {
+        // Return mock data for demo if endpoint doesn't exist
+        return getMockDashboardData(dateRange);
+      }
     }
-  };
-  
-  const toggleManufacturer = (id: string) => {
-    setSelectedManufacturers(prev => 
-      prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
-    );
-  };
-  
-  const toggleType = (id: string) => {
-    setSelectedTypes(prev => 
-      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
-    );
-  };
-  
-  const applyFilters = () => {
-    // In a real app, this would filter the results based on selected criteria
-    toast({
-      title: "Filters Applied",
-      description: "Your filter preferences have been applied"
-    });
-    setShowMobileFilters(false);
-  };
-  
-  const toggleMobileFilters = () => {
-    setShowMobileFilters(!showMobileFilters);
-  };
-  
-  // If we have alternatives data, compute savings percentages
-  const alternativesWithSavings = alternativesData?.alternatives?.map((alt: any) => {
-    const originalPrice = alternativesData.original.price;
-    const savingsPercentage = Math.round(((originalPrice - alt.price) / originalPrice) * 100);
-    return { ...alt, savingsPercentage };
   });
+  
+  // Fetch most searched medicines
+  const { data: topMedicines, isLoading: isLoadingTopMedicines } = useQuery({
+    queryKey: ['/api/medicines/top-searched'],
+    queryFn: async () => {
+      try {
+        const res = await fetch('/api/medicines/top-searched');
+        if (!res.ok) {
+          // If API endpoint doesn't exist yet, return mock data for demo
+          return getMockTopMedicines();
+        }
+        return res.json();
+      } catch (error) {
+        // Return mock data for demo if endpoint doesn't exist
+        return getMockTopMedicines();
+      }
+    }
+  });
+  
+  // Fetch inventory status
+  const { data: inventoryData, isLoading: isLoadingInventory } = useQuery({
+    queryKey: ['/api/medicines/inventory'],
+    queryFn: async () => {
+      try {
+        const res = await fetch('/api/medicines/inventory');
+        if (!res.ok) {
+          // If API endpoint doesn't exist yet, return mock data for demo
+          return getMockInventoryData();
+        }
+        return res.json();
+      } catch (error) {
+        // Return mock data for demo if endpoint doesn't exist
+        return getMockInventoryData();
+      }
+    }
+  });
+  
+  // Fetch price alerts
+  const { data: priceAlerts, isLoading: isLoadingAlerts } = useQuery({
+    queryKey: ['/api/medicines/price-alerts'],
+    queryFn: async () => {
+      try {
+        const res = await fetch('/api/medicines/price-alerts');
+        if (!res.ok) {
+          // If API endpoint doesn't exist yet, return mock data for demo
+          return getMockPriceAlerts();
+        }
+        return res.json();
+      } catch (error) {
+        // Return mock data for demo if endpoint doesn't exist
+        return getMockPriceAlerts();
+      }
+    }
+  });
+  
+  const handleDateRangeChange = (range: string) => {
+    setDateRange(range);
+  };
+  
+  // Format numbers with commas for thousands
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('en-IN').format(num);
+  };
+  
+  // Format percentage with + sign for positive values
+  const formatPercentage = (value: number) => {
+    return value > 0 ? `+${value}%` : `${value}%`;
+  };
+  
+  // Generate colors for charts based on their values
+  const getColorByValue = (value: number) => {
+    if (value > 20) return "var(--primary)";
+    if (value > 10) return "#22c55e";
+    if (value > 0) return "#84cc16";
+    if (value > -10) return "#eab308";
+    return "#ef4444";
+  };
+  
+  // Chart colors
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
   
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow bg-slate-50">
+      <main className="flex-grow bg-slate-50 dark:bg-slate-900">
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <Button variant="ghost" onClick={() => window.history.back()} className="flex items-center mb-4">
-              <ChevronLeft className="mr-1" size={16} /> Back
-            </Button>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold mb-1">PharmAssist Dashboard</h1>
+              <p className="text-muted-foreground">Monitor medicine trends, inventory, and price changes</p>
+            </div>
             
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="text-slate-500" size={18} />
-                </div>
-                <Input 
-                  type="text" 
-                  placeholder="Search for a medicine..." 
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Button type="submit" disabled={isLoading}>
-                Search
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="md:hidden" 
-                onClick={toggleMobileFilters}
-              >
-                <Filter size={18} />
-              </Button>
-            </form>
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Filters sidebar - desktop */}
-            <Card className="hidden md:block w-64 h-fit bg-white">
-              <CardContent className="p-5">
-                <h3 className="text-lg font-semibold mb-4 font-sans">Filters</h3>
-                
-                <div className="mb-6">
-                  <Label className="block text-slate-700 font-medium mb-2">Price Range</Label>
-                  <div className="flex items-center gap-2">
-                    <Slider 
-                      defaultValue={[100]} 
-                      max={200} 
-                      step={1} 
-                      className="w-full"
-                      onValueChange={setPriceRange}
-                    />
-                  </div>
-                  <div className="flex justify-between text-sm text-slate-500 mt-1">
-                    <span>₹0</span>
-                    <span>₹{priceRange[0]}+</span>
-                  </div>
-                </div>
-                
-                <div className="mb-6">
-                  <Label className="block text-slate-700 font-medium mb-2">Manufacturer</Label>
-                  <div className="space-y-2">
-                    {manufacturers.map((manufacturer) => (
-                      <div key={manufacturer.id} className="flex items-center">
-                        <Checkbox 
-                          id={`desktop-${manufacturer.id}`} 
-                          checked={selectedManufacturers.includes(manufacturer.id)}
-                          onCheckedChange={() => toggleManufacturer(manufacturer.id)}
-                        />
-                        <Label htmlFor={`desktop-${manufacturer.id}`} className="ml-2 text-slate-700">{manufacturer.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="mb-6">
-                  <Label className="block text-slate-700 font-medium mb-2">Medicine Type</Label>
-                  <div className="space-y-2">
-                    {medicineTypes.map((type) => (
-                      <div key={type.id} className="flex items-center">
-                        <Checkbox 
-                          id={`desktop-${type.id}`} 
-                          checked={selectedTypes.includes(type.id)}
-                          onCheckedChange={() => toggleType(type.id)}
-                        />
-                        <Label htmlFor={`desktop-${type.id}`} className="ml-2 text-slate-700">{type.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <Button onClick={applyFilters} className="w-full">Apply Filters</Button>
-              </CardContent>
-            </Card>
-            
-            {/* Mobile filters - shown when toggled */}
-            {showMobileFilters && (
-              <div className="fixed inset-0 bg-black/50 z-50 md:hidden">
-                <div className="absolute right-0 top-0 h-full w-80 bg-white p-5 overflow-y-auto">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Filters</h3>
-                    <Button variant="ghost" size="sm" onClick={toggleMobileFilters}>
-                      <ChevronLeft size={18} />
-                    </Button>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <Label className="block text-slate-700 font-medium mb-2">Price Range</Label>
-                    <div className="flex items-center gap-2">
-                      <Slider 
-                        defaultValue={[100]} 
-                        max={200} 
-                        step={1} 
-                        className="w-full"
-                        onValueChange={setPriceRange}
-                      />
-                    </div>
-                    <div className="flex justify-between text-sm text-slate-500 mt-1">
-                      <span>₹0</span>
-                      <span>₹{priceRange[0]}+</span>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <Label className="block text-slate-700 font-medium mb-2">Manufacturer</Label>
-                    <div className="space-y-2">
-                      {manufacturers.map((manufacturer) => (
-                        <div key={manufacturer.id} className="flex items-center">
-                          <Checkbox 
-                            id={`mobile-${manufacturer.id}`} 
-                            checked={selectedManufacturers.includes(manufacturer.id)}
-                            onCheckedChange={() => toggleManufacturer(manufacturer.id)}
-                          />
-                          <Label htmlFor={`mobile-${manufacturer.id}`} className="ml-2 text-slate-700">{manufacturer.label}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <Label className="block text-slate-700 font-medium mb-2">Medicine Type</Label>
-                    <div className="space-y-2">
-                      {medicineTypes.map((type) => (
-                        <div key={type.id} className="flex items-center">
-                          <Checkbox 
-                            id={`mobile-${type.id}`} 
-                            checked={selectedTypes.includes(type.id)}
-                            onCheckedChange={() => toggleType(type.id)}
-                          />
-                          <Label htmlFor={`mobile-${type.id}`} className="ml-2 text-slate-700">{type.label}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <Button onClick={applyFilters} className="w-full">Apply Filters</Button>
-                </div>
-              </div>
-            )}
-            
-            {/* Main content */}
-            <div className="flex-1">
-              {isLoading ? (
-                <Card>
-                  <CardContent className="p-6 flex justify-center items-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <span className="ml-3">Searching for medicines...</span>
-                  </CardContent>
-                </Card>
-              ) : isError ? (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Info className="h-12 w-12 text-red-500 mx-auto mb-2" />
-                    <h3 className="text-lg font-medium mb-1">Error Searching Medicines</h3>
-                    <p>We couldn't complete your search. Please try again.</p>
-                  </CardContent>
-                </Card>
-              ) : searchResults?.medicines?.length > 0 ? (
-                <div>
-                  {selectedMedicine ? (
-                    <>
-                      <div className="mb-4">
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => setSelectedMedicine(null)}
-                          className="flex items-center mb-2"
-                        >
-                          <ChevronLeft size={16} className="mr-1" /> Back to search results
-                        </Button>
-                        <h2 className="text-xl font-semibold">Alternatives & Price Comparison</h2>
-                      </div>
-                      
-                      {/* Original Medicine */}
-                      {alternativesData && (
-                        <>
-                          <MedicineCard medicine={alternativesData.original} />
-                          
-                          {/* Alternatives */}
-                          <div className="mb-5">
-                            <h3 className="font-medium text-lg mb-4">Alternatives to {alternativesData.original.name}</h3>
-                            
-                            {isLoadingAlternatives ? (
-                              <div className="p-8 text-center">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                                <p>Finding alternatives...</p>
-                              </div>
-                            ) : alternativesWithSavings?.length > 0 ? (
-                              <div className="space-y-4">
-                                {alternativesWithSavings.map((alt: any) => (
-                                  <AlternativeCard 
-                                    key={alt.id} 
-                                    alternative={alt} 
-                                    originalMedicine={alternativesData.original} 
-                                  />
-                                ))}
-                              </div>
-                            ) : (
-                              <Card>
-                                <CardContent className="p-6 text-center">
-                                  <Info className="h-12 w-12 text-slate-400 mx-auto mb-2" />
-                                  <h3 className="text-lg font-medium mb-1">No Alternatives Found</h3>
-                                  <p>We couldn't find any alternatives for this medication.</p>
-                                </CardContent>
-                              </Card>
-                            )}
-                          </div>
-                          
-                          {/* Chat interface for more questions */}
-                          <div className="mt-8">
-                            <h3 className="text-xl font-semibold mb-4">Have Questions About This Medication?</h3>
-                            <ChatInterface />
-                          </div>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <div className="mb-4">
-                        <h2 className="text-xl font-semibold">Search Results for "{searchTerm}"</h2>
-                        <p className="text-slate-500">Found {searchResults.medicines.length} medicines</p>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        {searchResults.medicines.map((medicine: any) => (
-                          <Card 
-                            key={medicine.id} 
-                            className="hover:border-primary hover:shadow-md cursor-pointer transition"
-                            onClick={() => setSelectedMedicine(medicine.id)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <div className="flex items-center">
-                                    <h4 className="font-medium">{medicine.name}</h4>
-                                    <div className="ml-2 text-xs inline-flex items-center font-medium px-2 py-1 rounded-full bg-slate-100 text-slate-800">
-                                      {medicine.isGeneric ? "Generic" : "Brand Name"}
-                                    </div>
-                                  </div>
-                                  <p className="text-slate-600 text-sm">{medicine.dosage}</p>
-                                  <div className="flex items-center mt-2">
-                                    <Pill className="h-4 w-4 text-slate-400 mr-1" />
-                                    <span className="text-sm">{medicine.activeIngredient}</span>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="text-lg font-bold">₹{medicine.price.toFixed(2)}</div>
-                                  <div className="flex items-center text-xs text-slate-500 justify-end mt-1">
-                                    <Store className="h-3 w-3 mr-1" />
-                                    <span>{medicine.availableAt.length} pharmacies</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : searchTerm ? (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Info className="h-12 w-12 text-slate-400 mx-auto mb-2" />
-                    <h3 className="text-lg font-medium mb-1">No Medicines Found</h3>
-                    <p>We couldn't find any medicines matching "{searchTerm}". Try another search term.</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="p-8 text-center">
-                    <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-medium mb-2">Search for a Medication</h3>
-                    <p className="text-slate-600 max-w-md mx-auto">
-                      Enter a medication name in the search box above to find alternatives and compare prices.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+            <div className="flex gap-2">
+              <Link href="/">
+                <Button variant="outline" className="flex items-center">
+                  <Home className="h-4 w-4 mr-2" />
+                  Home
+                </Button>
+              </Link>
+              <Link href="/search">
+                <Button className="flex items-center">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search Medicines
+                </Button>
+              </Link>
             </div>
           </div>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <div className="flex justify-between items-center">
+              <TabsList>
+                <TabsTrigger value="overview" className="flex items-center">
+                  <LayoutDashboard className="h-4 w-4 mr-2" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="inventory" className="flex items-center">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Inventory
+                </TabsTrigger>
+                <TabsTrigger value="price-changes" className="flex items-center">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Price Changes
+                </TabsTrigger>
+                <TabsTrigger value="alerts" className="flex items-center">
+                  <BellRing className="h-4 w-4 mr-2" />
+                  Alerts
+                </TabsTrigger>
+              </TabsList>
+              
+              <div className="hidden md:flex space-x-2">
+                <Button 
+                  variant={dateRange === "week" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => handleDateRangeChange("week")}
+                >
+                  Week
+                </Button>
+                <Button 
+                  variant={dateRange === "month" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => handleDateRangeChange("month")}
+                >
+                  Month
+                </Button>
+                <Button 
+                  variant={dateRange === "year" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => handleDateRangeChange("year")}
+                >
+                  Year
+                </Button>
+              </div>
+            </div>
+            
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="space-y-6">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {isLoadingStats ? (
+                  Array(4).fill(0).map((_, i) => (
+                    <Card key={i}>
+                      <CardContent className="pt-6">
+                        <Skeleton className="h-8 w-40 mb-2" />
+                        <Skeleton className="h-6 w-20" />
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Total Medicines</p>
+                            <p className="text-3xl font-bold">{formatNumber(statsData.totalMedicines)}</p>
+                          </div>
+                          <Pill className="h-10 w-10 p-2 bg-primary/10 text-primary rounded-full" />
+                        </div>
+                        <div className="flex items-center mt-4">
+                          <Badge variant={statsData.medicineGrowth > 0 ? "success" : "destructive"} className="mr-2">
+                            {statsData.medicineGrowth > 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                            {formatPercentage(statsData.medicineGrowth)}
+                          </Badge>
+                          <p className="text-sm text-muted-foreground">vs. previous {dateRange}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Total Searches</p>
+                            <p className="text-3xl font-bold">{formatNumber(statsData.totalSearches)}</p>
+                          </div>
+                          <Search className="h-10 w-10 p-2 bg-blue-100 text-blue-600 rounded-full" />
+                        </div>
+                        <div className="flex items-center mt-4">
+                          <Badge variant={statsData.searchGrowth > 0 ? "success" : "destructive"} className="mr-2">
+                            {statsData.searchGrowth > 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                            {formatPercentage(statsData.searchGrowth)}
+                          </Badge>
+                          <p className="text-sm text-muted-foreground">vs. previous {dateRange}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Average Savings</p>
+                            <p className="text-3xl font-bold">₹{formatNumber(statsData.averageSavings)}</p>
+                          </div>
+                          <TrendingDown className="h-10 w-10 p-2 bg-green-100 text-green-600 rounded-full" />
+                        </div>
+                        <div className="flex items-center mt-4">
+                          <Badge variant={statsData.savingsGrowth > 0 ? "success" : "destructive"} className="mr-2">
+                            {statsData.savingsGrowth > 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                            {formatPercentage(statsData.savingsGrowth)}
+                          </Badge>
+                          <p className="text-sm text-muted-foreground">vs. previous {dateRange}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">AI Chat Usage</p>
+                            <p className="text-3xl font-bold">{formatNumber(statsData.chatUsage)}</p>
+                          </div>
+                          <MessageCircle className="h-10 w-10 p-2 bg-purple-100 text-purple-600 rounded-full" />
+                        </div>
+                        <div className="flex items-center mt-4">
+                          <Badge variant={statsData.chatUsageGrowth > 0 ? "success" : "destructive"} className="mr-2">
+                            {statsData.chatUsageGrowth > 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                            {formatPercentage(statsData.chatUsageGrowth)}
+                          </Badge>
+                          <p className="text-sm text-muted-foreground">vs. previous {dateRange}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+              </div>
+              
+              {/* Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Search Trends</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingStats ? (
+                      <div className="h-80 w-full flex items-center justify-center">
+                        <Skeleton className="h-64 w-full" />
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={statsData.searchTrends}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Line type="monotone" dataKey="searches" stroke="var(--primary)" activeDot={{ r: 8 }} />
+                          <Line type="monotone" dataKey="uniqueUsers" stroke="#10b981" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Medicine Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingStats ? (
+                      <div className="h-80 w-full flex items-center justify-center">
+                        <Skeleton className="h-64 w-full rounded-full" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-72">
+                        <ResponsiveContainer width="100%" height={250}>
+                          <PieChart>
+                            <Pie
+                              data={statsData.medicineDistribution}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                            >
+                              {statsData.medicineDistribution.map((entry: any, index: number) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value) => [`${value}`, 'Count']} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Top Searched Medicines */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Most Searched Medicines</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingTopMedicines ? (
+                    <div className="space-y-4">
+                      {Array(5).fill(0).map((_, i) => (
+                        <div key={i} className="flex justify-between items-center">
+                          <Skeleton className="h-6 w-48" />
+                          <Skeleton className="h-6 w-24" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {topMedicines.slice(0, 5).map((medicine: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <span className="font-medium text-lg mr-3 w-5 text-center">{index + 1}</span>
+                            <div>
+                              <p className="font-medium">{medicine.name}</p>
+                              <p className="text-sm text-muted-foreground">{medicine.genericName}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">₹{medicine.price.toFixed(2)}</p>
+                            <div className="flex items-center space-x-1 justify-end">
+                              <Badge 
+                                variant={medicine.priceChange > 0 ? "destructive" : "success"}
+                                className="text-xs"
+                              >
+                                {medicine.priceChange > 0 ? (
+                                  <TrendingUp className="h-3 w-3 mr-1" />
+                                ) : (
+                                  <TrendingDown className="h-3 w-3 mr-1" />
+                                )}
+                                {Math.abs(medicine.priceChange)}%
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <Link href="/search" className="block">
+                        <Button variant="outline" className="w-full mt-4">
+                          View All Medicines
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Inventory Tab */}
+            <TabsContent value="inventory" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Stock</p>
+                        <p className="text-3xl font-bold">{isLoadingInventory ? <Skeleton className="h-9 w-20" /> : formatNumber(inventoryData.totalStock)}</p>
+                      </div>
+                      <ShoppingCart className="h-8 w-8 text-primary" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Out of Stock</p>
+                        <p className="text-3xl font-bold">{isLoadingInventory ? <Skeleton className="h-9 w-20" /> : inventoryData.outOfStock}</p>
+                      </div>
+                      <XCircle className="h-8 w-8 text-red-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Low Stock Alert</p>
+                        <p className="text-3xl font-bold">{isLoadingInventory ? <Skeleton className="h-9 w-20" /> : inventoryData.lowStock}</p>
+                      </div>
+                      <AlertTriangle className="h-8 w-8 text-amber-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Stock Levels by Medicine Type</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingInventory ? (
+                    <Skeleton className="h-80 w-full" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={350}>
+                      <BarChart
+                        data={inventoryData.stockByType}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="inStock" stackId="a" fill="#4ade80" name="In Stock" />
+                        <Bar dataKey="lowStock" stackId="a" fill="#fbbf24" name="Low Stock" />
+                        <Bar dataKey="outOfStock" stackId="a" fill="#f87171" name="Out of Stock" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">Low Stock Medicines</CardTitle>
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                    <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+                    Attention Required
+                  </Badge>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingInventory ? (
+                    <div className="space-y-4">
+                      {Array(5).fill(0).map((_, i) => (
+                        <div key={i} className="flex justify-between items-center">
+                          <Skeleton className="h-6 w-48" />
+                          <Skeleton className="h-6 w-24" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Medicine Name</TableHead>
+                          <TableHead>Current Stock</TableHead>
+                          <TableHead className="text-right">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {inventoryData.lowStockMedicines.map((medicine: any, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{medicine.name}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Progress value={medicine.stockPercentage} className="h-2 w-24" />
+                                <span className="text-sm">{medicine.currentStock}/{medicine.maxStock}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {medicine.currentStock === 0 ? (
+                                <Badge variant="destructive">Out of Stock</Badge>
+                              ) : (
+                                <Badge variant="warning">Low Stock</Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Price Changes Tab */}
+            <TabsContent value="price-changes" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Price Increases</p>
+                        <p className="text-3xl font-bold">{isLoadingInventory ? <Skeleton className="h-9 w-20" /> : inventoryData.priceIncreases}</p>
+                      </div>
+                      <TrendingUp className="h-8 w-8 text-red-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Price Decreases</p>
+                        <p className="text-3xl font-bold">{isLoadingInventory ? <Skeleton className="h-9 w-20" /> : inventoryData.priceDecreases}</p>
+                      </div>
+                      <TrendingDown className="h-8 w-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Avg. Change</p>
+                        <p className="text-3xl font-bold">{isLoadingInventory ? <Skeleton className="h-9 w-20" /> : formatPercentage(inventoryData.averagePriceChange)}</p>
+                      </div>
+                      <BarChart3 className="h-8 w-8 text-blue-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Price Change Trends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingInventory ? (
+                    <Skeleton className="h-80 w-full" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={350}>
+                      <LineChart
+                        data={inventoryData.priceChangeTrends}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="increases" stroke="#ef4444" name="Price Increases" />
+                        <Line type="monotone" dataKey="decreases" stroke="#10b981" name="Price Decreases" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">Recent Price Changes</CardTitle>
+                  <Badge>Last 30 Days</Badge>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingInventory ? (
+                    <div className="space-y-4">
+                      {Array(5).fill(0).map((_, i) => (
+                        <div key={i} className="flex justify-between items-center">
+                          <Skeleton className="h-6 w-48" />
+                          <Skeleton className="h-6 w-24" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Medicine</TableHead>
+                          <TableHead>Old Price</TableHead>
+                          <TableHead>New Price</TableHead>
+                          <TableHead className="text-right">Change</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {inventoryData.recentPriceChanges.map((change: any, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{change.name}</TableCell>
+                            <TableCell>₹{change.oldPrice.toFixed(2)}</TableCell>
+                            <TableCell>₹{change.newPrice.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">
+                              <Badge 
+                                variant={change.percentageChange > 0 ? "destructive" : "success"}
+                              >
+                                {change.percentageChange > 0 ? (
+                                  <TrendingUp className="h-3 w-3 mr-1" />
+                                ) : (
+                                  <TrendingDown className="h-3 w-3 mr-1" />
+                                )}
+                                {formatPercentage(change.percentageChange)}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Alerts Tab */}
+            <TabsContent value="alerts" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Active Alerts</p>
+                        <p className="text-3xl font-bold">{isLoadingAlerts ? <Skeleton className="h-9 w-20" /> : priceAlerts.activeAlerts}</p>
+                      </div>
+                      <BellRing className="h-8 w-8 text-amber-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Triggered Today</p>
+                        <p className="text-3xl font-bold">{isLoadingAlerts ? <Skeleton className="h-9 w-20" /> : priceAlerts.triggeredToday}</p>
+                      </div>
+                      <Clock className="h-8 w-8 text-blue-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Avg. Savings</p>
+                        <p className="text-3xl font-bold">₹{isLoadingAlerts ? <Skeleton className="h-9 w-20 inline-block" /> : priceAlerts.averageSavings.toFixed(2)}</p>
+                      </div>
+                      <TrendingDown className="h-8 w-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Price Alerts</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingAlerts ? (
+                    <div className="space-y-4">
+                      {Array(5).fill(0).map((_, i) => (
+                        <div key={i} className="flex justify-between items-center">
+                          <Skeleton className="h-6 w-48" />
+                          <Skeleton className="h-6 w-24" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : priceAlerts.alerts.length > 0 ? (
+                    <div className="space-y-4">
+                      {priceAlerts.alerts.map((alert: any, index: number) => (
+                        <Card key={index} className={`border-l-4 ${alert.status === 'triggered' ? 'border-l-green-500' : 'border-l-amber-500'}`}>
+                          <CardContent className="p-4">
+                            <div className="flex justify-between">
+                              <div>
+                                <h3 className="font-medium">{alert.medicineName}</h3>
+                                <p className="text-sm text-muted-foreground">{alert.condition}</p>
+                              </div>
+                              <Badge variant={alert.status === 'triggered' ? "success" : "warning"}>
+                                {alert.status === 'triggered' ? (
+                                  <>
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Triggered
+                                  </>
+                                ) : (
+                                  <>
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Pending
+                                  </>
+                                )}
+                              </Badge>
+                            </div>
+                            <div className="flex justify-between mt-2">
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">Target: </span>
+                                <span className="font-medium">₹{alert.targetPrice.toFixed(2)}</span>
+                              </div>
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">Current: </span>
+                                <span className="font-medium">₹{alert.currentPrice.toFixed(2)}</span>
+                              </div>
+                              {alert.status === 'triggered' && (
+                                <div className="text-sm text-green-600 font-medium">
+                                  Saved: ₹{(alert.originalPrice - alert.currentPrice).toFixed(2)}
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <BellRing className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                      <h3 className="text-lg font-medium">No Price Alerts</h3>
+                      <p className="text-muted-foreground max-w-sm mx-auto mt-1">
+                        Set up price alerts to be notified when medicines drop in price
+                      </p>
+                      <Button className="mt-4">Create New Alert</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
       <Footer />
     </div>
   );
+}
+
+// Mock data for the dashboard (this would be replaced by actual API calls in production)
+function getMockDashboardData(dateRange: string) {
+  // Adjust data based on the selected date range
+  const multiplier = dateRange === "week" ? 1 : dateRange === "month" ? 4 : 12;
+  
+  return {
+    totalMedicines: 2450 + Math.floor(Math.random() * 100),
+    medicineGrowth: 12.5,
+    totalSearches: 18700 * multiplier + Math.floor(Math.random() * 1000),
+    searchGrowth: 8.2,
+    averageSavings: 156.75 + Math.floor(Math.random() * 20),
+    savingsGrowth: 15.3,
+    chatUsage: 3520 * multiplier + Math.floor(Math.random() * 500),
+    chatUsageGrowth: 24.7,
+    
+    // Search trends data for the line chart
+    searchTrends: Array(multiplier).fill(0).map((_, i) => ({
+      date: dateRange === "week" 
+        ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i % 7]
+        : dateRange === "month"
+        ? `Week ${i+1}`
+        : `Month ${i+1}`,
+      searches: 1200 + Math.floor(Math.random() * 800),
+      uniqueUsers: 800 + Math.floor(Math.random() * 400)
+    })),
+    
+    // Medicine distribution data for the pie chart
+    medicineDistribution: [
+      { name: 'Generic', value: 1430 },
+      { name: 'Branded', value: 1020 },
+      { name: 'Ayurvedic', value: 350 },
+      { name: 'Homeopathic', value: 180 },
+      { name: 'Other', value: 120 }
+    ]
+  };
+}
+
+function getMockTopMedicines() {
+  return [
+    { 
+      name: 'Paracetamol 500mg', 
+      genericName: 'Paracetamol',
+      price: 35.40, 
+      priceChange: -5.2,
+      searches: 3420
+    },
+    { 
+      name: 'Azithromycin 500mg', 
+      genericName: 'Azithromycin',
+      price: 180.25, 
+      priceChange: 2.7,
+      searches: 2890
+    },
+    { 
+      name: 'Montelukast 10mg', 
+      genericName: 'Montelukast',
+      price: 246.80, 
+      priceChange: -3.5,
+      searches: 2670
+    },
+    { 
+      name: 'Amoxicillin 500mg', 
+      genericName: 'Amoxicillin',
+      price: 125.60, 
+      priceChange: 0,
+      searches: 2450
+    },
+    { 
+      name: 'Dolo 650mg', 
+      genericName: 'Paracetamol',
+      price: 32.75, 
+      priceChange: -1.8,
+      searches: 2410
+    },
+    { 
+      name: 'Crocin 500mg', 
+      genericName: 'Paracetamol',
+      price: 40.50, 
+      priceChange: 1.5,
+      searches: 2280
+    },
+    { 
+      name: 'Cetrizine 10mg', 
+      genericName: 'Cetrizine',
+      price: 65.90, 
+      priceChange: -2.1,
+      searches: 2150
+    }
+  ];
+}
+
+function getMockInventoryData() {
+  return {
+    totalStock: 24890,
+    outOfStock: 87,
+    lowStock: 142,
+    priceIncreases: 37,
+    priceDecreases: 54,
+    averagePriceChange: -1.2,
+    
+    // Stock by medicine type
+    stockByType: [
+      { name: 'Antibiotics', inStock: 1200, lowStock: 35, outOfStock: 12 },
+      { name: 'Pain Relief', inStock: 1800, lowStock: 28, outOfStock: 15 },
+      { name: 'Cardiac', inStock: 920, lowStock: 31, outOfStock: 18 },
+      { name: 'Diabetes', inStock: 780, lowStock: 22, outOfStock: 16 },
+      { name: 'Respiratory', inStock: 1050, lowStock: 26, outOfStock: 14 }
+    ],
+    
+    // Price change trends
+    priceChangeTrends: Array(12).fill(0).map((_, i) => ({
+      date: `Week ${i+1}`,
+      increases: 5 + Math.floor(Math.random() * 15),
+      decreases: 8 + Math.floor(Math.random() * 20)
+    })),
+    
+    // Low stock medicines
+    lowStockMedicines: [
+      { name: 'Amoxicillin 500mg', currentStock: 12, maxStock: 100, stockPercentage: 12 },
+      { name: 'Atorvastatin 10mg', currentStock: 8, maxStock: 80, stockPercentage: 10 },
+      { name: 'Metformin 500mg', currentStock: 15, maxStock: 150, stockPercentage: 10 },
+      { name: 'Lisinopril 5mg', currentStock: 0, maxStock: 120, stockPercentage: 0 },
+      { name: 'Sertraline 50mg', currentStock: 5, maxStock: 100, stockPercentage: 5 }
+    ],
+    
+    // Recent price changes
+    recentPriceChanges: [
+      { name: 'Amoxicillin 500mg', oldPrice: 145.75, newPrice: 125.60, percentageChange: -13.8 },
+      { name: 'Atorvastatin 20mg', oldPrice: 210.30, newPrice: 235.90, percentageChange: 12.2 },
+      { name: 'Losartan 50mg', oldPrice: 175.20, newPrice: 168.40, percentageChange: -3.9 },
+      { name: 'Albuterol Inhaler', oldPrice: 310.50, newPrice: 285.75, percentageChange: -8.0 },
+      { name: 'Montelukast 10mg', oldPrice: 230.20, newPrice: 246.80, percentageChange: 7.2 }
+    ]
+  };
+}
+
+function getMockPriceAlerts() {
+  return {
+    activeAlerts: 8,
+    triggeredToday: 3,
+    averageSavings: 78.65,
+    
+    alerts: [
+      {
+        medicineName: 'Paracetamol 500mg',
+        condition: 'Price drops below ₹30.00',
+        targetPrice: 30.00,
+        currentPrice: 28.50,
+        originalPrice: 35.40,
+        status: 'triggered',
+        date: '2 hours ago'
+      },
+      {
+        medicineName: 'Amoxicillin 500mg',
+        condition: 'Price drops below ₹120.00',
+        targetPrice: 120.00,
+        currentPrice: 125.60,
+        originalPrice: 145.75,
+        status: 'pending',
+        date: 'Today'
+      },
+      {
+        medicineName: 'Atorvastatin 10mg',
+        condition: 'Price drops below ₹180.00',
+        targetPrice: 180.00,
+        currentPrice: 175.80,
+        originalPrice: 198.25,
+        status: 'triggered',
+        date: '1 day ago'
+      },
+      {
+        medicineName: 'Montelukast 10mg',
+        condition: 'Price drops below ₹220.00',
+        targetPrice: 220.00,
+        currentPrice: 246.80,
+        originalPrice: 246.80,
+        status: 'pending',
+        date: 'Today'
+      },
+      {
+        medicineName: 'Losartan 50mg',
+        condition: 'Price drops below ₹165.00',
+        targetPrice: 165.00,
+        currentPrice: 168.40,
+        originalPrice: 175.20,
+        status: 'pending',
+        date: 'Today'
+      }
+    ]
+  };
 }
