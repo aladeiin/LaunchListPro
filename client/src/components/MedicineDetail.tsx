@@ -44,6 +44,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 import AlternativeCard from './AlternativeCard';
 import ChatInterface from './ChatInterface';
+import MlSubstitutions from './MlSubstitutions';
 
 interface MedicineDetailProps {
   medicineName: string;
@@ -222,9 +223,10 @@ export default function MedicineDetail({ medicineName }: MedicineDetailProps) {
 
         <CardContent className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 mb-6">
+            <TabsList className="grid grid-cols-5 mb-6">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="alternatives">Alternatives</TabsTrigger>
+              <TabsTrigger value="ai-suggestions">AI Suggestions</TabsTrigger>
               <TabsTrigger value="prices">Compare Prices</TabsTrigger>
               <TabsTrigger value="info">Medical Info</TabsTrigger>
             </TabsList>
@@ -351,6 +353,11 @@ export default function MedicineDetail({ medicineName }: MedicineDetailProps) {
                   </Button>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="ai-suggestions" className="space-y-6">
+              {/* ML Substitution Recommendations */}
+              <MlSubstitutions medicineName={medicineName} originalMedicine={medicine} />
             </TabsContent>
 
             <TabsContent value="prices">
