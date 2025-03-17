@@ -58,7 +58,9 @@ export default function Dashboard() {
         // Return mock data for demo if endpoint doesn't exist
         return getMockDashboardData(dateRange);
       }
-    }
+    },
+    // Add initialization to prevent "Cannot read properties of undefined" errors
+    initialData: getMockDashboardData(dateRange)
   });
   
   // Fetch most searched medicines
@@ -76,7 +78,8 @@ export default function Dashboard() {
         // Return mock data for demo if endpoint doesn't exist
         return getMockTopMedicines();
       }
-    }
+    },
+    initialData: getMockTopMedicines()
   });
   
   // Fetch inventory status
@@ -94,7 +97,8 @@ export default function Dashboard() {
         // Return mock data for demo if endpoint doesn't exist
         return getMockInventoryData();
       }
-    }
+    },
+    initialData: getMockInventoryData()
   });
   
   // Fetch price alerts
@@ -112,7 +116,8 @@ export default function Dashboard() {
         // Return mock data for demo if endpoint doesn't exist
         return getMockPriceAlerts();
       }
-    }
+    },
+    initialData: getMockPriceAlerts()
   });
   
   const handleDateRangeChange = (range: string) => {
