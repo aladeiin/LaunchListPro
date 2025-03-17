@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
+import Search from "@/pages/Search";
 import { ThemeProvider } from "./lib/theme-context";
 
 function Router() {
@@ -12,6 +13,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/search" component={Search} />
+      <Route path="/search/:query" component={Search} />
       <Route component={NotFound} />
     </Switch>
   );

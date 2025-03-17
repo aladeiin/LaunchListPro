@@ -14,11 +14,15 @@ import { Pill, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
 
 interface MedicineCardProps {
   medicine: Medicine;
+  onClick?: () => void;
 }
 
-export default function MedicineCard({ medicine }: MedicineCardProps) {
+export default function MedicineCard({ medicine, onClick }: MedicineCardProps) {
   return (
-    <Card className="overflow-hidden flex flex-col h-full">
+    <Card 
+      className="overflow-hidden flex flex-col h-full cursor-pointer transition-shadow hover:shadow-md"
+      onClick={onClick}
+    >
       <CardContent className="flex-1 p-5">
         <div className="flex justify-between items-start mb-3">
           <div>
