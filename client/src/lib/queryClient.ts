@@ -13,10 +13,10 @@ async function throwIfResNotOk(res: Response) {
   throw new Error(errorMessage);
 }
 
-export async function apiRequest(
+export async function apiRequest<T = any>(
   url: string,
   options: RequestInit = {}
-): Promise<any> {
+): Promise<T> {
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -40,10 +40,10 @@ export async function apiRequest(
 type UnauthorizedBehavior = "returnNull" | "throw";
 
 export const getQueryFn = ({ on401 }: { on401: UnauthorizedBehavior }) => {
-  return async ({ queryKey }: { queryKey: (string | number)[] }) => {
+  return async <T = any>({ queryKey }: { queryKey: (string | number)[] }): Promise<T | null> => {
     const url = queryKey.join('/');
     try {
-      return await apiRequest(url);
+      return await apiRequest<T>(url);
     } catch (error) {
       if (error instanceof Error && error.message.includes('401') && on401 === 'returnNull') {
         return null;

@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import Search from "@/pages/Search";
+import SymptomWizard from "@/pages/SymptomWizard";
 import { ThemeProvider } from "./lib/theme-context";
 
 function Router() {
@@ -15,6 +16,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/search" component={Search} />
       <Route path="/search/:query" component={Search} />
+      <Route path="/symptom-wizard" component={SymptomWizard} />
       <Route component={NotFound} />
     </Switch>
   );
