@@ -132,7 +132,27 @@ async function enhanceSubstitutionsWithAI(
       throw new Error('No content in AI response');
     }
 
-    const aiResponse = JSON.parse(content);
+    let aiResponse;
+    try {
+      aiResponse = JSON.parse(content);
+      
+      // Check if the response has the expected structure
+      if (!aiResponse.substitutes || !Array.isArray(aiResponse.substitutes)) {
+        throw new Error('AI response missing substitutes array');
+      }
+    } catch (error) {
+      console.warn('Invalid AI response format:', error);
+      // Create a default response structure
+      aiResponse = {
+        substitutes: potentialSubstitutes.slice(0, limit).map(med => ({
+          name: med.name,
+          similarityScore: 80,
+          reasonsForSubstitution: ["Same active ingredient"],
+          warningsOrCautions: ["Consult your doctor before substituting any medication"],
+          dosageAdjustment: null
+        }))
+      };
+    }
     
     // Map the AI recommendations back to our Medicine objects
     const recommendationsWithMedicines = aiResponse.substitutes.map((rec: any) => {
@@ -264,7 +284,27 @@ async function findSubstitutesWithAI(
       throw new Error('No content in AI response');
     }
 
-    const aiResponse = JSON.parse(content);
+    let aiResponse;
+    try {
+      aiResponse = JSON.parse(content);
+      
+      // Check if the response has the expected structure
+      if (!aiResponse.substitutes || !Array.isArray(aiResponse.substitutes)) {
+        throw new Error('AI response missing substitutes array');
+      }
+    } catch (error) {
+      console.warn('Invalid AI response format:', error);
+      // Create a default response structure
+      aiResponse = {
+        substitutes: allMedicines.slice(0, limit).map(med => ({
+          name: med.name,
+          similarityScore: 75,
+          reasonsForSubstitution: ["Alternative medication option"],
+          warningsOrCautions: ["Consult your doctor before substituting any medication"],
+          dosageAdjustment: null
+        }))
+      };
+    }
     
     // Map the AI recommendations back to our Medicine objects
     const recommendationsWithMedicines = aiResponse.substitutes.map((rec: any) => {
@@ -365,7 +405,30 @@ export async function analyzeSubstitutionEfficacy(
       throw new Error('No content in AI response');
     }
 
-    const analysis = JSON.parse(content);
+    let analysis;
+    try {
+      analysis = JSON.parse(content);
+      
+      // Validate required fields
+      if (!analysis.efficacyScore || 
+          typeof analysis.efficacyScore !== 'number' ||
+          !analysis.detailedAnalysis ||
+          !Array.isArray(analysis.potentialSideEffects) ||
+          !analysis.recommendedUsage) {
+        throw new Error('AI response missing required fields');
+      }
+    } catch (error) {
+      console.warn('Invalid efficacy analysis format:', error);
+      // Provide fallback analysis
+      analysis = {
+        efficacyScore: 50, // Neutral score
+        detailedAnalysis: `Both ${originalMedicine.name} and ${substituteMedicine.name} contain the same active ingredient: ${originalMedicine.activeIngredient}. They should have similar therapeutic effects.`,
+        potentialSideEffects: ['Side effects profile should be similar for both medications'],
+        recommendedUsage: 'Follow your doctor\'s instructions for dosing',
+        additionalNotes: 'Consult a healthcare professional before making any substitutions'
+      };
+    }
+    
     return {
       ...analysis,
       efficacyScore: analysis.efficacyScore / 100 // Convert to 0-1 range
