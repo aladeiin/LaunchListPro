@@ -229,6 +229,20 @@ export class MemStorage implements IStorage {
   private initMedicineData() {
     const medicines: InsertMedicine[] = [
       {
+        name: "Clavam 625 Tablet",
+        genericName: "Amoxycillin + Clavulanic Acid",
+        description: "Clavam 625 Tablet is a combination of two medicines: Amoxycillin and Clavulanic Acid. It is used to treat bacterial infections like sinusitis, pneumonia, ear infections, urinary tract infections, and skin infections.",
+        manufacturer: "Alkem Laboratories Ltd",
+        isGeneric: false,
+        price: 223.32,
+        dosage: "Strip of 10 tablets",
+        activeIngredient: "Amoxycillin (500mg), Clavulanic Acid (125mg)",
+        imageUrl: "",
+        availableAt: ["Apollo Pharmacy", "MedPlus"],
+        inStock: true,
+        stockCount: 45
+      },
+      {
         name: "Augmentin 625 Duo Tablet",
         genericName: "Amoxycillin + Clavulanic Acid",
         description: "Augmentin 625 Duo Tablet is a combination of two medicines: Amoxycillin and Clavulanic Acid. It is used to treat bacterial infections like sinusitis, pneumonia, ear infections, urinary tract infections, and skin infections.",
@@ -407,6 +421,34 @@ export class MemStorage implements IStorage {
         activeIngredient: "Ambroxol (15mg/5ml), Salbutamol (1mg/5ml)",
         imageUrl: "",
         availableAt: []
+      },
+      {
+        name: "Clavam 375 Tablet",
+        genericName: "Amoxycillin + Clavulanic Acid",
+        description: "Clavam 375 Tablet is a combination of two medicines: Amoxycillin and Clavulanic Acid. It is used to treat bacterial infections like sinusitis, pneumonia, ear infections, urinary tract infections, and skin infections.",
+        manufacturer: "Alkem Laboratories Ltd",
+        isGeneric: false,
+        price: 218.5,
+        dosage: "Strip of 10 tablets",
+        activeIngredient: "Amoxycillin (250mg), Clavulanic Acid (125mg)",
+        imageUrl: "",
+        availableAt: ["Apollo Pharmacy", "Wellness Forever"],
+        inStock: true,
+        stockCount: 32
+      },
+      {
+        name: "Clavamox 500mg/125mg Tablet",
+        genericName: "Amoxycillin + Clavulanic Acid",
+        description: "Clavamox 500mg/125mg Tablet is a combination of two medicines: Amoxycillin and Clavulanic Acid. It is used to treat bacterial infections like sinusitis, pneumonia, ear infections, urinary tract infections, and skin infections.",
+        manufacturer: "Mediwin Pharmaceuticals",
+        isGeneric: true,
+        price: 192.0,
+        dosage: "Strip of 6 tablets",
+        activeIngredient: "Amoxycillin (500mg), Clavulanic Acid (125mg)",
+        imageUrl: "",
+        availableAt: ["MedPlus", "NetMeds"],
+        inStock: true,
+        stockCount: 25
       }
     ];
 
@@ -418,8 +460,9 @@ export class MemStorage implements IStorage {
         id,
         imageUrl: medicine.imageUrl || "",
         availableAt: medicine.availableAt || [],
-        inStock: Math.random() > 0.2, // 80% chance of being in stock
-        stockCount: Math.floor(Math.random() * 100) + 1
+        // Only set inStock and stockCount if not already defined
+        inStock: medicine.inStock !== undefined ? medicine.inStock : Math.random() > 0.2,
+        stockCount: medicine.stockCount !== undefined ? medicine.stockCount : Math.floor(Math.random() * 100) + 1
       });
     }
   }
