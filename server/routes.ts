@@ -8,6 +8,7 @@ import { z } from "zod";
 import medicinesRouter from "./routes/medicines";
 import updaterRouter from "./routes/data-updater";
 import { mlSubstitutionRouter } from "./routes/ml-substitution";
+import { symptomWizardRouter } from "./routes/symptom-wizard";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create API router
@@ -45,6 +46,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Mount ML substitution router
   apiRouter.use("/ml-substitution", mlSubstitutionRouter);
+  
+  // Mount symptom wizard router
+  apiRouter.use("/symptom-wizard", symptomWizardRouter);
 
   // Get medication info via OpenAI
   apiRouter.get("/medication-info/:name", async (req: Request, res: Response) => {
