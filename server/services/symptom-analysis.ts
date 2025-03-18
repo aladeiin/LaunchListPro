@@ -53,27 +53,27 @@ export enum WizardStepType {
  */
 export const symptomCategories = [
   {
-    category: 'Pain',
+    name: 'Pain',
     symptoms: ['Headache', 'Backache', 'Joint pain', 'Muscle pain', 'Abdominal pain', 'Chest pain']
   },
   {
-    category: 'Digestive',
+    name: 'Digestive',
     symptoms: ['Nausea', 'Vomiting', 'Diarrhea', 'Constipation', 'Bloating', 'Indigestion', 'Heartburn']
   },
   {
-    category: 'Respiratory',
+    name: 'Respiratory',
     symptoms: ['Cough', 'Shortness of breath', 'Sore throat', 'Runny nose', 'Congestion', 'Wheezing']
   },
   {
-    category: 'Neurological',
+    name: 'Neurological',
     symptoms: ['Dizziness', 'Fatigue', 'Difficulty sleeping', 'Anxiety', 'Mood changes', 'Memory issues']
   },
   {
-    category: 'Skin',
+    name: 'Skin',
     symptoms: ['Rash', 'Itching', 'Hives', 'Dry skin', 'Bruising', 'Swelling']
   },
   {
-    category: 'Other',
+    name: 'Other',
     symptoms: ['Fever', 'Chills', 'Sweating', 'Weight changes', 'Vision changes', 'Hearing changes']
   }
 ];

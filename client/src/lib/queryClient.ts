@@ -31,7 +31,7 @@ export async function apiRequest<T = any>(
 
   // If the response is empty, return null
   if (response.status === 204) {
-    return null;
+    return null as unknown as T;
   }
 
   return response.json();

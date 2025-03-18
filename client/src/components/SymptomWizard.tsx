@@ -177,7 +177,7 @@ export default function SymptomWizard() {
   // Analyze symptoms mutation
   const analyzeMutation = useMutation<AnalyzeResponse, Error, { symptoms: Symptom[] }>({
     mutationFn: async (data: { symptoms: Symptom[] }) => {
-      return apiRequest<AnalyzeResponse>("/api/symptom-wizard/analyze", {
+      return apiRequest("/api/symptom-wizard/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -199,7 +199,7 @@ export default function SymptomWizard() {
   // Get recommendations mutation
   const recommendationsMutation = useMutation<RecommendationsResponse, Error, { conditions: Condition[] }>({
     mutationFn: async (data: { conditions: Condition[] }) => {
-      return apiRequest<RecommendationsResponse>("/api/symptom-wizard/recommendations", {
+      return apiRequest("/api/symptom-wizard/recommendations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
