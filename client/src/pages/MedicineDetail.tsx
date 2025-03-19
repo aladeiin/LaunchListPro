@@ -35,6 +35,37 @@ import { Check, AlertTriangle, Info, PlusCircle, Activity } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Medicine } from '@shared/schema';
 
+// Define the API response types
+interface MedicineResponse extends Medicine {}
+
+interface AlternativesResponse {
+  data: (Medicine & { savingsPercentage: number })[];
+  originalMedicine: {
+    id: number;
+    name: string;
+    price: number;
+    activeIngredient: string;
+    manufacturer: string;
+    isGeneric: boolean;
+  };
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+interface MedicationInfoResponse {
+  description: string;
+  alternatives: string[];
+  sideEffects: string[];
+  interactions: string[];
+  guidelines: string;
+}
+
 const MedicineDetail = () => {
   const [match, params] = useRoute('/medicine/:name');
   const { toast } = useToast();
@@ -42,19 +73,19 @@ const MedicineDetail = () => {
   const decodedName = decodeURIComponent(medicineName);
   
   // Fetch medicine details
-  const { data: medicine, isLoading: isLoadingMedicine, error: medicineError } = useQuery({
+  const { data: medicine, isLoading: isLoadingMedicine, error: medicineError } = useQuery<MedicineResponse>({
     queryKey: ['/api/medicines/name', decodedName],
     enabled: !!decodedName,
   });
   
   // Fetch medicine alternatives
-  const { data: alternativesData, isLoading: isLoadingAlternatives } = useQuery({
+  const { data: alternativesData, isLoading: isLoadingAlternatives } = useQuery<AlternativesResponse>({
     queryKey: ['/api/medicines', decodedName, 'alternatives'],
     enabled: !!medicine,
   });
   
   // Fetch medication info (side effects, interactions, etc.)
-  const { data: medicationInfo, isLoading: isLoadingMedicationInfo } = useQuery({
+  const { data: medicationInfo, isLoading: isLoadingMedicationInfo } = useQuery<MedicationInfoResponse>({
     queryKey: ['/api/medication-info', decodedName],
     enabled: !!medicine,
   });

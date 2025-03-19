@@ -33,7 +33,7 @@ const Inventory = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch medicines
-  const { data: medicinesData, isLoading, error } = useQuery({
+  const { data: medicinesData, isLoading, error } = useQuery<MedicinesResponse>({
     queryKey: ['/api/medicines', { page: currentPage, limit: 12 }],
   });
 
@@ -270,11 +270,12 @@ const Inventory = () => {
                 <Pagination className="mt-8">
                   <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className={currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}
-                      />
+                      <a 
+                        onClick={() => currentPage > 1 && handlePageChange(Math.max(1, currentPage - 1))}
+                        className={`${currentPage === 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                      >
+                        <PaginationPrevious />
+                      </a>
                     </PaginationItem>
                     
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -304,11 +305,12 @@ const Inventory = () => {
                     })}
                     
                     <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                        disabled={currentPage === totalPages}
-                        className={currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""}
-                      />
+                      <a 
+                        onClick={() => currentPage < totalPages && handlePageChange(Math.min(totalPages, currentPage + 1))}
+                        className={`${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                      >
+                        <PaginationNext />
+                      </a>
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
