@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Medicine } from '@shared/schema';
+import MedicineCard from '@/components/MedicineCard';
+import { InfoIcon } from 'lucide-react';
 
 // Define the API response types
 interface MedicinesResponse {
@@ -105,7 +107,15 @@ const Inventory = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-green-700">Medicine Inventory</h1>
+      <h1 className="text-3xl font-bold mb-4 text-green-700">Medicine Inventory</h1>
+      
+      <div className="flex items-center p-4 mb-6 bg-blue-50 border border-blue-200 rounded-lg">
+        <InfoIcon className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
+        <p className="text-sm text-blue-700">
+          Displaying authentic medicinal data from the comprehensive Indian medicine dataset. 
+          All prices are in Indian Rupees (₹).
+        </p>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Filters Sidebar */}
@@ -213,54 +223,12 @@ const Inventory = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredMedicines.map((medicine: Medicine) => (
-                    <Link key={medicine.id} href={`/medicine/${medicine.name}`}>
-                      <a className="block h-full">
-                        <Card className="border h-full hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-lg font-semibold text-green-700 line-clamp-2">
-                              {medicine.name}
-                            </CardTitle>
-                            <p className="text-sm text-gray-500">{medicine.manufacturer}</p>
-                          </CardHeader>
-                          <CardContent className="space-y-3 pb-2">
-                            <div className="flex items-center space-x-2">
-                              <p className="text-sm text-gray-600">Generic Name:</p>
-                              <p className="text-sm font-medium">{medicine.genericName}</p>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <p className="text-sm text-gray-600">Dosage:</p>
-                              <p className="text-sm font-medium">{medicine.dosage}</p>
-                            </div>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Badge className={medicine.isGeneric ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}>
-                                {medicine.isGeneric ? "Generic" : "Branded"}
-                              </Badge>
-                              <Badge className={medicine.inStock ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                                {medicine.inStock ? "In Stock" : "Out of Stock"}
-                              </Badge>
-                            </div>
-                            <p className="text-sm line-clamp-2 text-gray-600 mt-1">
-                              {medicine.description.slice(0, 100)}...
-                            </p>
-                          </CardContent>
-                          <CardFooter className="pt-0 flex justify-between items-center">
-                            <div className="flex flex-col">
-                              <span className="text-xl font-bold text-green-700">
-                                {formatPrice(medicine.price)}
-                              </span>
-                              {!medicine.isGeneric && (
-                                <span className="text-xs text-gray-500">
-                                  Generic available at lower price
-                                </span>
-                              )}
-                            </div>
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                              View Details
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      </a>
-                    </Link>
+                    <div key={medicine.id} className="h-full">
+                      <MedicineCard 
+                        medicine={medicine} 
+                        onClick={() => window.location.href = `/medicine/${encodeURIComponent(medicine.name)}`}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
