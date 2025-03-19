@@ -7,6 +7,8 @@ import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import Search from "@/pages/Search";
 import SymptomWizard from "@/pages/SymptomWizard";
+import Inventory from "@/pages/Inventory";
+import MedicineDetail from "@/pages/MedicineDetail";
 import { ThemeProvider } from "./lib/theme-context";
 
 function Router() {
@@ -17,6 +19,8 @@ function Router() {
       <Route path="/search" component={Search} />
       <Route path="/search/:query" component={Search} />
       <Route path="/symptom-wizard" component={SymptomWizard} />
+      <Route path="/inventory" component={Inventory} />
+      <Route path="/medicine/:name" component={MedicineDetail} />
       <Route component={NotFound} />
     </Switch>
   );
