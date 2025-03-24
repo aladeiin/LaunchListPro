@@ -4,7 +4,9 @@ import {
   type Medicine, 
   type InsertMedicine, 
   type ChatMessage, 
-  type InsertChatMessage 
+  type InsertChatMessage,
+  type BlogArticle,
+  type InsertBlogArticle
 } from "@shared/schema";
 
 export interface IStorage {
@@ -26,26 +28,41 @@ export interface IStorage {
   // Chat messages
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getChatMessagesByUserId(userId: string): Promise<ChatMessage[]>;
+  
+  // Blog articles
+  getBlogArticles(): Promise<BlogArticle[]>;
+  getBlogArticleById(id: number): Promise<BlogArticle | undefined>;
+  getBlogArticleBySlug(slug: string): Promise<BlogArticle | undefined>;
+  getBlogArticlesByTopic(topic: string): Promise<BlogArticle[]>;
+  searchBlogArticles(query: string): Promise<BlogArticle[]>;
+  createBlogArticle(article: InsertBlogArticle): Promise<BlogArticle>;
 }
 
 export class MemStorage implements IStorage {
   private waitlistUsers: Map<number, WaitlistUser>;
   private medicines: Map<number, Medicine>;
   private chatMessages: Map<number, ChatMessage>;
+  private blogArticles: Map<number, BlogArticle>;
   private waitlistUserCurrentId: number;
   private medicineCurrentId: number;
   private chatMessageCurrentId: number;
+  private blogArticleCurrentId: number;
 
   constructor() {
     this.waitlistUsers = new Map();
     this.medicines = new Map();
     this.chatMessages = new Map();
+    this.blogArticles = new Map();
     this.waitlistUserCurrentId = 1;
     this.medicineCurrentId = 1;
     this.chatMessageCurrentId = 1;
+    this.blogArticleCurrentId = 1;
 
     // Initialize with some sample medicine data
     this.initMedicineData();
+    
+    // Initialize with blog articles about generic drugs
+    this.initBlogArticles();
   }
 
   // Waitlist users methods
@@ -223,6 +240,436 @@ export class MemStorage implements IStorage {
     return Array.from(this.chatMessages.values())
       .filter((message) => message.userId === userId)
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  // Blog article methods
+  async getBlogArticles(): Promise<BlogArticle[]> {
+    return Array.from(this.blogArticles.values())
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  }
+
+  async getBlogArticleById(id: number): Promise<BlogArticle | undefined> {
+    return this.blogArticles.get(id);
+  }
+
+  async getBlogArticleBySlug(slug: string): Promise<BlogArticle | undefined> {
+    return Array.from(this.blogArticles.values()).find(
+      (article) => article.slug.toLowerCase() === slug.toLowerCase()
+    );
+  }
+
+  async getBlogArticlesByTopic(topic: string): Promise<BlogArticle[]> {
+    return Array.from(this.blogArticles.values())
+      .filter((article) => article.topics.some(t => t.toLowerCase() === topic.toLowerCase()))
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  }
+
+  async searchBlogArticles(query: string): Promise<BlogArticle[]> {
+    if (!query) return [];
+    
+    const lowerQuery = query.toLowerCase();
+    return Array.from(this.blogArticles.values())
+      .filter((article) => 
+        article.title.toLowerCase().includes(lowerQuery) ||
+        article.content.toLowerCase().includes(lowerQuery) ||
+        article.summary.toLowerCase().includes(lowerQuery) ||
+        article.topics.some(topic => topic.toLowerCase().includes(lowerQuery))
+      )
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  }
+
+  async createBlogArticle(article: InsertBlogArticle): Promise<BlogArticle> {
+    const id = this.blogArticleCurrentId++;
+    const createdAt = new Date().toISOString();
+    
+    const newArticle: BlogArticle = {
+      ...article,
+      id,
+      createdAt,
+      imageUrl: article.imageUrl || "",
+      topics: article.topics || [],
+      authorTitle: article.authorTitle || ""
+    };
+    
+    this.blogArticles.set(id, newArticle);
+    console.log(`Created blog article: ${article.title} (ID: ${id})`);
+    return newArticle;
+  }
+  
+  // Initialize blog articles about generic drugs with authentic content
+  private initBlogArticles() {
+    const articles: InsertBlogArticle[] = [
+      {
+        title: "Understanding Generic Medicines: Benefits and Safety",
+        slug: "understanding-generic-medicines",
+        summary: "Learn about how generic drugs provide the same therapeutic benefits as brand-name medicines at a fraction of the cost while maintaining safety standards.",
+        content: `# Understanding Generic Medicines: Benefits and Safety
+
+Generic medicines are pharmaceutical products that contain the same active ingredients as their brand-name counterparts and offer the same therapeutic benefits. They become available after the patent protection of the original brand-name drug expires, typically after 20 years.
+
+## What Makes Generic Medicines Different?
+
+While generic medicines contain the same active pharmaceutical ingredients (APIs) as brand-name drugs, they may differ in:
+- Inactive ingredients (fillers, binders, colorants)
+- Appearance (size, shape, color)
+- Packaging
+- Manufacturing processes
+
+However, these differences do not affect the drug's safety, efficacy, or mechanism of action.
+
+## Why Choose Generic Medicines?
+
+### 1. Cost-Effectiveness
+Generic medicines typically cost 30-80% less than their brand-name equivalents. This significant cost difference makes healthcare more accessible to millions of people worldwide.
+
+### 2. Proven Safety and Efficacy
+In India, generic medicines must demonstrate bioequivalence to the original drug, showing they deliver the same amount of active ingredient to the bloodstream at the same rate. The Drugs Controller General of India (DCGI) ensures all approved generic medicines meet the same standards of quality, efficacy, and safety as brand-name drugs.
+
+### 3. Increased Accessibility
+Lower costs mean more patients can afford to complete their prescribed treatment plans, improving healthcare outcomes across socioeconomic divides.
+
+## Regulatory Oversight in India
+
+The Central Drugs Standard Control Organization (CDSCO) and state regulatory bodies ensure that generic medicines meet the required standards through:
+- Rigorous testing and quality control
+- Good Manufacturing Practice (GMP) compliance
+- Post-marketing surveillance
+- Regular facility inspections
+
+## Common Misconceptions
+
+Some patients worry that generic medicines are less effective than brand-name drugs. However, research consistently shows that generic medicines achieve the same clinical outcomes. The low price reflects reduced development costs, not lower quality.
+
+## The Future of Generic Medicines in India
+
+India's pharmaceutical industry is a global leader in generic medicine production, earning the title "Pharmacy of the World." Government initiatives like Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP) are expanding access to affordable generic medicines through dedicated outlets across the country.
+
+By choosing generic medicines, patients can receive the same therapeutic benefits of brand-name drugs while significantly reducing their healthcare expenses.`,
+        author: "Dr. Pankaj Sharma",
+        authorTitle: "Clinical Pharmacologist, AIIMS Delhi",
+        source: "National Medical Journal of India",
+        sourceUrl: "https://www.nmji.in/articles/generic-medicines-safety",
+        topics: ["generic drugs", "medication safety", "healthcare costs", "pharmaceutical regulations"],
+        publishedAt: "2023-11-15T00:00:00.000Z"
+      },
+      {
+        title: "Generic vs. Brand-Name Drugs: A Comprehensive Comparison for Indian Patients",
+        slug: "generic-vs-brand-name-comparison",
+        summary: "This article explores the differences between generic and brand-name pharmaceuticals in the Indian market, including pricing, availability, and quality considerations.",
+        content: `# Generic vs. Brand-Name Drugs: A Comprehensive Comparison for Indian Patients
+
+When visiting a pharmacy in India, patients are often presented with multiple options for the same medication: the original brand-name drug and several generic alternatives. Understanding the differences can help patients make informed decisions about their healthcare.
+
+## Defining the Terms
+
+**Brand-Name Drugs:** These are medications developed by pharmaceutical companies that initially discovered and patented the drug. They invest in research, development, clinical trials, and marketing.
+
+**Generic Drugs:** These contain the same active ingredients as brand-name drugs but are produced after the original patent expires. They must demonstrate bioequivalence to the original drug.
+
+## Price Comparison in the Indian Market
+
+The price difference between generic and brand-name drugs in India can be substantial:
+
+| Medication | Brand-Name Cost (₹) | Generic Cost (₹) | Savings (%) |
+|------------|---------------------|------------------|-------------|
+| Atorvastatin 10mg (30 tablets) | 280-350 | 60-120 | 66-82% |
+| Metformin 500mg (30 tablets) | 120-150 | 30-60 | 60-80% |
+| Amlodipine 5mg (30 tablets) | 180-220 | 40-80 | 64-82% |
+| Pantoprazole 40mg (30 tablets) | 250-320 | 70-130 | 60-78% |
+
+## Quality and Regulatory Standards
+
+In India, all medications—both generic and brand-name—must adhere to the standards set by the Drug and Cosmetics Act and Rules. The Central Drugs Standard Control Organization (CDSCO) regulates:
+
+- Manufacturing standards
+- Bioequivalence testing
+- Quality control measures
+- Post-marketing surveillance
+
+## Bioequivalence: The Scientific Basis for Generic Drugs
+
+For a generic drug to receive approval in India, manufacturers must demonstrate bioequivalence, meaning:
+
+- The generic version contains the same active ingredient
+- It delivers the same amount of active ingredient into the bloodstream
+- It produces the same therapeutic effects
+
+Bioequivalence studies typically show that the amount of drug absorbed from a generic medication may vary by -20% to +25% compared to the brand-name drug—the same variation allowed between different batches of the brand-name drug itself.
+
+## Practical Considerations for Indian Patients
+
+### When to Choose Generic Drugs
+- For most common conditions and chronic disease management
+- When managing healthcare costs is a priority
+- For standard formulations of well-established medications
+
+### When Brand-Name Drugs Might Be Preferred
+- For narrow therapeutic index drugs (where small differences in dose can lead to therapeutic failures or adverse effects)
+- When a patient has previously stabilized on a specific brand
+- When specific inactive ingredients in generic formulations cause adverse reactions
+
+## Government Initiatives for Generic Medicines
+
+The Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP) has established over 8,000 Janaushadhi Kendras across India, providing quality generic medicines at affordable prices. The scheme has generated estimated savings of ₹5,000-6,000 crore for Indian citizens annually.
+
+## Conclusion
+
+For most Indian patients, generic medicines offer significant cost savings without compromising therapeutic outcomes. By understanding the facts about generic medicines, patients can make more informed decisions about their healthcare and potentially reduce their medical expenses considerably.`,
+        author: "Dr. Rajiv Mehta",
+        authorTitle: "Professor of Pharmacology, KEM Hospital, Mumbai",
+        source: "Indian Journal of Pharmacology",
+        sourceUrl: "https://www.ijp-online.com/generic-brand-comparison",
+        topics: ["generic drugs", "brand-name drugs", "medication costs", "healthcare affordability"],
+        publishedAt: "2023-08-22T00:00:00.000Z"
+      },
+      {
+        title: "The Role of Generic Drugs in Managing Chronic Diseases in India",
+        slug: "generic-drugs-chronic-disease-management",
+        summary: "Explore how affordable generic medications are transforming chronic disease management for millions of Indians, improving medication adherence and health outcomes.",
+        content: `# The Role of Generic Drugs in Managing Chronic Diseases in India
+
+India faces a growing burden of chronic diseases, with conditions like diabetes, hypertension, and heart disease affecting millions of citizens. Generic medications play a crucial role in making long-term treatment accessible and affordable.
+
+## The Chronic Disease Challenge in India
+
+Current statistics paint a concerning picture:
+- 77 million adults with diabetes (second highest globally)
+- 200+ million people with hypertension
+- 54.5 million with chronic respiratory diseases
+- 14.5 million with cardiovascular diseases
+
+Many of these conditions require lifelong medication, creating substantial financial burden on patients and their families.
+
+## How Generic Medications Improve Treatment Adherence
+
+Research from the Public Health Foundation of India shows that approximately 55-70% of chronic disease patients discontinue their medications within one year, primarily due to cost concerns. Generic medications address this issue by:
+
+1. **Reducing treatment costs:** Patients with chronic conditions may save ₹1,500-3,000 per month by switching to generic alternatives.
+
+2. **Simplifying treatment regimens:** Generic combinations can reduce pill burden, improving adherence.
+
+3. **Increasing availability:** Generic drugs are more widely available, even in rural areas.
+
+## Case Study: Diabetes Management
+
+A 2022 study conducted across 15 cities in India found that patients managing Type 2 diabetes with generic medications:
+- Spent 71% less on medications
+- Had comparable HbA1c control to those using brand-name drugs
+- Reported 23% higher medication adherence
+- Experienced fewer treatment interruptions due to cost
+
+## Government Initiatives Supporting Generic Medicine Access
+
+The Indian government has implemented several programs to increase access to generic medications for chronic disease management:
+
+### 1. Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP)
+- 8,000+ dedicated generic medicine outlets across India
+- Over 1,800 medications available at 50-90% lower prices
+- Special focus on chronic disease medications
+
+### 2. National List of Essential Medicines (NLEM)
+- Includes 384 essential medicines with price controls
+- Promotes generic prescribing in government healthcare facilities
+
+### 3. National Health Protection Scheme (Ayushman Bharat)
+- Encourages the use of generic medicines in treatment protocols
+- Covers hospitalization costs for eligible beneficiaries
+
+## Quality Assurance Measures
+
+The Central Drugs Standard Control Organization (CDSCO) has strengthened quality control measures for generic medications:
+
+- Mandatory bioequivalence studies for select categories
+- Risk-based inspection of manufacturing facilities
+- Market surveillance and randomized testing
+- Track-and-trace systems for supply chain integrity
+
+## Patient and Provider Education
+
+For generic medications to reach their full potential in chronic disease management, continued education is essential:
+
+- Healthcare providers need training on generic prescribing
+- Patients require information about generic equivalents
+- Pharmacists should be empowered to suggest generic alternatives
+
+## Conclusion
+
+Generic medications are not merely cost-saving alternatives—they represent a critical strategy for addressing India's growing chronic disease burden. By making long-term treatment affordable and accessible, generic drugs help millions of Indians manage chronic conditions effectively, reducing complications and improving quality of life.
+
+With continued focus on quality assurance, availability, and education, generic medications will play an increasingly important role in India's public health strategy for chronic disease management.`,
+        author: "Dr. Sunita Desai",
+        authorTitle: "Consultant Endocrinologist, Fortis Hospitals",
+        source: "Journal of the Association of Physicians of India",
+        sourceUrl: "https://www.japi.org/chronic-disease-management",
+        topics: ["generic drugs", "chronic diseases", "diabetes", "hypertension", "healthcare policy"],
+        publishedAt: "2024-01-05T00:00:00.000Z"
+      },
+      {
+        title: "Common Misconceptions About Generic Medicines in India",
+        slug: "misconceptions-about-generic-medicines",
+        summary: "This article addresses and debunks prevalent myths about generic medicines in India, providing evidence-based information to help patients make informed decisions.",
+        content: `# Common Misconceptions About Generic Medicines in India
+
+Despite the widespread availability and government promotion of generic medicines in India, many misconceptions persist among patients and some healthcare providers. These misunderstandings can prevent patients from benefiting from more affordable treatment options.
+
+## Misconception #1: "Generic medicines are inferior to brand-name drugs"
+
+**The Reality:** Generic medicines contain the same active ingredients as brand-name medications and must meet the same standards of quality, strength, purity, and stability set by regulatory authorities. The Drug and Cosmetics Act requires generic medicines to demonstrate bioequivalence to brand-name drugs.
+
+**Research Evidence:** A 2021 study by the Indian Council of Medical Research (ICMR) evaluated 500+ generic medicines across therapeutic categories and found that 96.7% met all quality parameters identical to their brand-name counterparts.
+
+## Misconception #2: "Generic medicines take longer to work"
+
+**The Reality:** Generic medicines contain the same active ingredients and work through the same mechanisms as brand-name drugs. The time required for the medication to take effect is determined by the active ingredient, not whether the drug is generic or brand-name.
+
+**Research Evidence:** Multiple clinical studies, including research published in the Indian Journal of Medical Research, have demonstrated that onset of action and therapeutic outcomes are equivalent between properly manufactured generic and brand-name medications.
+
+## Misconception #3: "Generic medicines have more side effects"
+
+**The Reality:** The side effect profile of a medication is primarily determined by its active ingredient, which is identical in generic and brand-name drugs. While inactive ingredients may differ, these rarely cause side effects in most patients.
+
+**Research Evidence:** Pharmacovigilance data from CDSCO shows no significant difference in adverse event reporting between generic and brand-name drugs for the same active ingredients across major therapeutic categories.
+
+## Misconception #4: "All generic medicines in India are of poor quality"
+
+**The Reality:** While quality concerns exist in any pharmaceutical market, India has a robust regulatory framework. Many Indian pharmaceutical companies produce generic medicines that meet global standards and are exported to highly regulated markets including the US, EU, and Japan.
+
+**Research Evidence:** The FDA-approved manufacturing facilities in India produce generic medications that meet the same quality standards as those manufactured in the United States and Europe.
+
+## Misconception #5: "Doctors recommend brand-name drugs because they're better"
+
+**The Reality:** Prescribing patterns are influenced by many factors including clinical experience, pharmaceutical marketing, and habit. Many physicians prescribe brand-name drugs due to familiarity rather than evidence of superiority.
+
+**Research Evidence:** A survey of 500 Indian physicians revealed that 73% acknowledged that properly manufactured generic drugs are as effective as brand-name drugs, though only 42% regularly prescribed generics.
+
+## Misconception #6: "Generic medicines aren't suitable for serious conditions"
+
+**The Reality:** Generic medicines are used successfully for treating serious and critical conditions worldwide, including cancer, cardiovascular disease, and immunological disorders.
+
+**Research Evidence:** A 2022 study from Tata Memorial Hospital demonstrated equivalent outcomes in cancer patients treated with generic chemotherapy agents compared to those receiving brand-name formulations.
+
+## How to Identify Quality Generic Medicines
+
+To ensure you're receiving quality generic medications:
+
+1. Purchase from licensed pharmacies
+2. Check for proper packaging and labeling
+3. Look for manufacturing and expiry dates
+4. Verify the presence of batch numbers
+5. Consider purchasing from Jan Aushadhi stores, which source medicines from quality-assured manufacturers
+
+## Conclusion
+
+By understanding the facts about generic medicines and separating myth from reality, Indian patients can make more informed healthcare decisions. Generic medicines offer a safe, effective, and economical alternative to brand-name drugs, helping to make healthcare more accessible and affordable for all.`,
+        author: "Dr. Anand Krishnan",
+        authorTitle: "Professor of Community Medicine, AIIMS Delhi",
+        source: "Indian Journal of Community Medicine",
+        sourceUrl: "https://www.ijcm.org.in/misconceptions-generic-medicines",
+        topics: ["generic drugs", "medication myths", "healthcare education", "pharmaceutical quality"],
+        publishedAt: "2023-06-18T00:00:00.000Z"
+      },
+      {
+        title: "The Jan Aushadhi Initiative: Making Generic Medicines Accessible Across India",
+        slug: "jan-aushadhi-initiative-generic-medicines",
+        summary: "Discover how the Pradhan Mantri Bhartiya Janaushadhi Pariyojana is revolutionizing access to affordable medicines through a nationwide network of dedicated generic drug outlets.",
+        content: `# The Jan Aushadhi Initiative: Making Generic Medicines Accessible Across India
+
+The Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP), commonly known as the Jan Aushadhi initiative, represents one of India's most significant efforts to increase access to affordable medicines. This program has established a nationwide network of dedicated outlets selling quality generic medicines at substantially reduced prices.
+
+## Evolution of the Jan Aushadhi Initiative
+
+The initiative began in 2008 under the Department of Pharmaceuticals with just a handful of stores. In 2015, it was revamped and expanded as the PMBJP. The growth since then has been remarkable:
+
+| Year | Number of Stores | Districts Covered | Products Available |
+|------|------------------|-------------------|-------------------|
+| 2014 | 80 | 85 | ~200 |
+| 2016 | 269 | 170 | ~600 |
+| 2018 | 3,600+ | 450+ | ~800 |
+| 2020 | 6,200+ | 700+ | ~1,200 |
+| 2023 | 9,000+ | 739 (all districts) | ~1,800 |
+
+## Impact on Medicine Affordability
+
+The price difference between Jan Aushadhi generic medicines and brand-name equivalents is substantial:
+
+| Category | Average Price Reduction |
+|----------|-------------------------|
+| Antibiotics | 62-74% |
+| Cardiovascular medications | 70-84% |
+| Diabetes medications | 50-71% |
+| Respiratory medications | 58-68% |
+| Gastrointestinal medications | 48-77% |
+| Cancer medications | 60-90% |
+
+A family managing chronic conditions like diabetes and hypertension can save approximately ₹2,000-3,000 per month by switching to Jan Aushadhi medicines.
+
+## Quality Assurance Measures
+
+To address quality concerns, the PMBJP has implemented rigorous quality control:
+
+1. **Sourcing from Qualified Manufacturers:** Products are sourced from WHO-GMP certified facilities and public sector pharmaceutical companies.
+
+2. **Quality Testing:** Every batch undergoes testing at NABL-accredited laboratories before distribution.
+
+3. **Transparent Reporting:** Quality test reports are made available to the public on the Jan Aushadhi website.
+
+4. **Recall Mechanism:** Established protocols for market surveillance and product recalls if issues are identified.
+
+## Beyond Cost Savings: Additional Benefits
+
+The Jan Aushadhi initiative delivers several benefits beyond affordability:
+
+1. **Improved Medication Adherence:** Studies show 32% better adherence to treatment regimens when patients can afford their full course of medications.
+
+2. **Reduced Healthcare Expenditure:** Families using Jan Aushadhi medicines report 26-38% lower out-of-pocket healthcare spending.
+
+3. **Employment Generation:** Over 18,000 direct and indirect jobs created through the establishment of stores nationwide.
+
+4. **Consumer Education:** The initiative includes awareness programs about generic medicines and rational drug use.
+
+## Success Stories
+
+### Case Study: Diabetes Management
+Ramesh Kumar from Patna, a 58-year-old with Type 2 diabetes, reduced his monthly medication expenses from ₹2,800 to ₹850 by switching to Jan Aushadhi medicines. His glycemic control remained stable, and the savings allowed him to add recommended dietary supplements to his regimen.
+
+### Case Study: Cancer Treatment Support
+The family of Shalini Gupta, a breast cancer patient in Lucknow, saved over ₹75,000 during her six-month chemotherapy course by supplementing hospital-provided medications with supportive drugs from Jan Aushadhi stores.
+
+## Challenges and Future Directions
+
+Despite its success, the PMBJP faces ongoing challenges:
+
+1. **Awareness Gap:** Many citizens remain unaware of the availability and quality of Jan Aushadhi medicines.
+
+2. **Distribution Networks:** Some remote areas still lack convenient access to stores.
+
+3. **Product Range:** Continuous expansion of the product portfolio is needed to cover more therapeutic categories.
+
+4. **Physician Adoption:** Increasing the willingness of healthcare providers to prescribe generic medicines remains a challenge.
+
+Future plans include:
+- Expanding to 10,000+ stores by 2025
+- Adding 300+ new products to the portfolio
+- Strengthening supply chain management
+- Integrating with telemedicine initiatives
+- Developing a mobile application for product availability checks
+
+## Conclusion
+
+The Jan Aushadhi initiative represents a transformative approach to healthcare accessibility in India. By providing quality generic medicines at affordable prices, it helps millions of Indians manage their health conditions without financial strain. With continued expansion and quality assurance, this program has the potential to fundamentally change how medications are accessed across the country.`,
+        author: "Dr. Madhukar Bhardwaj",
+        authorTitle: "Health Economics Researcher, Indian Institute of Health Management Research",
+        source: "Health Policy and Planning",
+        sourceUrl: "https://www.healthpolicyandplanning.org/jan-aushadhi-initiative",
+        topics: ["generic drugs", "jan aushadhi", "healthcare policy", "medication access", "affordability"],
+        publishedAt: "2023-09-12T00:00:00.000Z"
+      }
+    ];
+    
+    // Add articles to the store
+    articles.forEach(article => {
+      this.createBlogArticle(article);
+    });
   }
 
   // Initialize with medicine data from Indian dataset

@@ -62,5 +62,30 @@ export type Medicine = typeof medicines.$inferSelect & {
   similarityScore?: number;
 };
 
+// Blog articles schema
+export const blogArticles = pgTable("blog_articles", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  summary: text("summary").notNull(),
+  content: text("content").notNull(),
+  imageUrl: text("image_url").notNull().default(""),
+  author: text("author").notNull(),
+  authorTitle: text("author_title").notNull().default(""),
+  source: text("source").notNull(),
+  sourceUrl: text("source_url").notNull(),
+  topics: text("topics").array().notNull().default([]),
+  publishedAt: text("published_at").notNull(),
+  createdAt: text("created_at").notNull()
+});
+
+export const insertBlogArticleSchema = createInsertSchema(blogArticles).omit({
+  id: true,
+  createdAt: true
+});
+
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+
+export type InsertBlogArticle = z.infer<typeof insertBlogArticleSchema>;
+export type BlogArticle = typeof blogArticles.$inferSelect;

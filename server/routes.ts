@@ -9,6 +9,7 @@ import medicinesRouter from "./routes/medicines";
 import updaterRouter from "./routes/data-updater";
 import { mlSubstitutionRouter } from "./routes/ml-substitution";
 import { symptomWizardRouter } from "./routes/symptom-wizard";
+import blogRouter from "./routes/blog";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create API router
@@ -49,6 +50,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Mount symptom wizard router
   apiRouter.use("/symptom-wizard", symptomWizardRouter);
+  
+  // Mount blog router
+  apiRouter.use("/blog", blogRouter);
 
   // Get medication info via OpenAI
   apiRouter.get("/medication-info/:name", async (req: Request, res: Response) => {
