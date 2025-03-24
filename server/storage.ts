@@ -665,9 +665,366 @@ The Jan Aushadhi initiative represents a transformative approach to healthcare a
         publishedAt: "2023-09-12T00:00:00.000Z"
       }
     ];
+
+    // Add news articles from Indian national newspapers
+    const newsArticles: InsertBlogArticle[] = [
+      {
+        title: "Government to make generic drugs prescription mandatory in all Central hospitals",
+        slug: "govt-generic-drugs-mandatory-central-hospitals",
+        summary: "The Indian government is set to mandate generic drugs prescription in all Central hospitals to combat rising healthcare costs and ensure quality medication access.",
+        content: `# Government to make generic drugs prescription mandatory in all Central hospitals
+
+The Union Health Ministry has issued a directive that is set to make prescription of generic drugs mandatory in all Central government hospitals and healthcare institutions. The move is designed to reduce healthcare costs for patients and promote the use of quality-assured generic medications.
+
+## New Policy Details
+
+According to a senior official from the Health Ministry, the policy will be implemented in phases:
+
+"All Central Government Hospitals, including AIIMS facilities across the country, will transition to prescribing generic medicines exclusively within the next six months," said Union Health Secretary Rajesh Bhushan at a press briefing in New Delhi.
+
+The directive specifies that doctors must prescribe medicines by their generic names rather than brand names, allowing patients to purchase more affordable alternatives.
+
+## Background and Rationale
+
+The push toward generic medicine prescription aligns with previous efforts by the government to increase access to affordable healthcare. In 2017, a similar initiative was announced but faced implementation challenges. The revised policy comes with stronger enforcement mechanisms and clearer guidelines for healthcare providers.
+
+Key reasons cited for the policy include:
+
+- The significant price difference between generic and branded drugs (often 50-90% lower for generics)
+- The increasing burden of out-of-pocket healthcare expenses for Indian families
+- The success of the Jan Aushadhi program, which has established credibility for generic medicines
+
+## Quality Assurance Measures
+
+To address concerns about generic drug quality, the government has also announced enhanced testing and surveillance:
+
+"The Central Drugs Standard Control Organization will increase random sampling and testing of generic medicines by 300% to ensure all medications in the market meet quality standards," said Dr. V.G. Somani, Drugs Controller General of India.
+
+Additional measures include:
+
+- New bioequivalence testing requirements for critical medications
+- Strengthened manufacturing standards for pharmaceutical companies
+- Public reporting of quality test results
+
+## Industry Response
+
+The Indian Pharmaceutical Alliance, representing major domestic drug manufacturers, has welcomed the move while requesting adequate transition time. "We support efforts to increase generic prescriptions but emphasize the need for quality control and proper implementation," said Secretary-General Sudarshan Jain.
+
+However, some multinational pharmaceutical companies have expressed concerns about potential market impacts.
+
+## Implementation Timeline
+
+The implementation roadmap includes:
+
+- Immediate effect in AIIMS New Delhi and other premier institutions
+- Extension to all Central Government hospitals within three months
+- Complete implementation across all government healthcare facilities within six months
+- Integration with the Ayushman Bharat Digital Mission for monitoring prescription patterns
+
+## Expected Impact
+
+The Health Ministry estimates that the policy will reduce medication costs for patients by approximately ₹15,000 crore annually when fully implemented.
+
+"This is a significant step toward reducing catastrophic health expenditure for Indian families," noted Dr. Randeep Guleria, former AIIMS Director. "When combined with expanded health insurance coverage under Ayushman Bharat, it will substantially increase healthcare affordability."
+
+The policy change is expected to particularly benefit patients with chronic diseases who require long-term medication therapies.`,
+        author: "Health Bureau",
+        authorTitle: "",
+        source: "The Hindu",
+        sourceUrl: "https://www.thehindu.com/news/national/govt-generic-drugs-mandatory-central-hospitals",
+        topics: ["generic drugs", "healthcare policy", "government initiatives", "medicine affordability"],
+        publishedAt: "2024-01-15T00:00:00.000Z"
+      },
+      {
+        title: "Jan Aushadhi stores cross 10,000 mark, sales hit ₹1,000 crore",
+        slug: "jan-aushadhi-stores-10000-milestone",
+        summary: "The Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP) achieves major milestone with 10,000 stores nationwide and annual sales exceeding ₹1,000 crore.",
+        content: `# Jan Aushadhi stores cross 10,000 mark, sales hit ₹1,000 crore
+
+The Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP), the government's program to provide quality generic medicines at affordable prices, has crossed a significant milestone with the opening of its 10,000th store in Silchar, Assam. The scheme has also recorded annual sales exceeding ₹1,000 crore for the first time since its inception.
+
+## Impressive Growth Trajectory
+
+From just 80 stores in 2014, the PMBJP has expanded exponentially over the past decade. The growth has accelerated particularly in the last three years:
+
+- 2021: 7,500 stores
+- 2022: 8,800 stores
+- 2023: 9,500 stores
+- 2024: 10,000+ stores
+
+"This rapid expansion demonstrates our government's commitment to making healthcare affordable and accessible for all Indians," said Union Minister for Chemicals and Fertilizers Mansukh Mandaviya, who inaugurated the 10,000th store virtually.
+
+The stores now cover all 739 districts in the country, with particular emphasis on rural and underserved areas.
+
+## Financial Performance and Social Impact
+
+The financial metrics of the program are equally impressive:
+
+- Annual sales crossed ₹1,000 crore in the financial year 2023-24
+- Monthly sales now average over ₹100 crore
+- Average sales per store have increased from ₹73,000 in 2020 to ₹98,000 in 2024
+
+"Beyond the numbers, the true success of this initiative is measured in terms of medicine affordability for common citizens," said Rajneesh Tingal, Joint Secretary, Department of Pharmaceuticals. "Our estimates suggest the scheme has delivered total savings of approximately ₹20,000 crore to citizens over the past five years by providing medicines at 50-90% below market prices."
+
+The program has also created over 25,000 direct and indirect employment opportunities, particularly for pharmacists and young entrepreneurs.
+
+## Product Range Expansion
+
+The PMBJP has significantly expanded its product portfolio:
+
+- Current offerings include more than 1,965 medications and 285 surgical items
+- Recent additions include costly anticancer and anti-diabetic medications
+- New categories include cardiac devices, nutraceuticals, and Ayush products
+
+"The expanded product range ensures that patients with various medical conditions can find affordable alternatives at Jan Aushadhi stores," explained S. Aparna, Secretary, Department of Pharmaceuticals.
+
+## Quality Assurance Framework
+
+Addressing concerns about generic medicine quality, the government has highlighted its robust quality control measures:
+
+- Sourcing from WHO-GMP certified manufacturers
+- Mandatory testing of each batch at NABL-accredited laboratories
+- Regular market sample testing
+- Transparent reporting of quality test results
+
+"The quality standards for Jan Aushadhi medicines are as stringent as those for branded drugs," asserted Dr. Eswara Reddy, Joint Drugs Controller. "Our rejection rate for batches not meeting quality parameters is approximately 6%, demonstrating our commitment to quality."
+
+## Future Roadmap
+
+The government has outlined ambitious plans for the next phase of the program:
+
+- Increasing store count to 15,000 by 2025
+- Expanding product range to include medical devices and equipment
+- Enhancing digital integration for inventory management
+- Strengthening the supply chain to ensure consistent availability
+- Launching a dedicated mobile application for product information and availability
+
+## Beneficiary Testimonials
+
+The impact of the program is best illustrated through beneficiary experiences:
+
+Laxmi Devi, a 62-year-old hypertension and diabetes patient from Patna, shared: "My monthly medicine expenses have reduced from ₹3,500 to just ₹900 after switching to Jan Aushadhi medicines. The quality is good, and I've had no issues with my health parameters."
+
+Similarly, Ramesh Sharma, a cancer survivor from Jaipur, noted: "The supportive medications during my chemotherapy would have cost me over ₹12,000 monthly, but I got them for around ₹3,000 from Jan Aushadhi. This made a significant difference in my ability to complete the treatment."
+
+## Expert Assessment
+
+Healthcare economists have evaluated the program positively. "The Jan Aushadhi initiative represents a successful model of government intervention in healthcare markets," observed Dr. Sakthivel Selvaraj, Director, Health Economics at the Public Health Foundation of India. "It has demonstrated that quality generic medicines can be provided affordably while maintaining sustainability."
+
+However, experts also note areas for improvement, including increasing awareness among physicians to prescribe generic medicines and ensuring consistent stock availability across all stores.`,
+        author: "Economic Bureau",
+        authorTitle: "",
+        source: "The Indian Express",
+        sourceUrl: "https://indianexpress.com/article/business/jan-aushadhi-stores-10000-milestone-sales",
+        topics: ["jan aushadhi", "generic drugs", "healthcare policy", "pharmaceutical industry"],
+        publishedAt: "2024-02-27T00:00:00.000Z"
+      },
+      {
+        title: "Government launches 'Pharma Jan Samadhan' portal for medicine price complaints",
+        slug: "pharma-jan-samadhan-portal-launch",
+        summary: "The Department of Pharmaceuticals introduces a new online portal allowing citizens to register complaints about overpriced medicines and track resolution status.",
+        content: `# Government launches 'Pharma Jan Samadhan' portal for medicine price complaints
+
+The Department of Pharmaceuticals has launched 'Pharma Jan Samadhan', a new online portal designed to empower consumers to report overpricing of medicines and track the status of their complaints in real-time. The initiative aims to enforce price regulations and increase transparency in pharmaceutical pricing.
+
+## Portal Features and Functionality
+
+The Pharma Jan Samadhan portal (https://jansamadhan.dpco.gov.in) offers several key features:
+
+- Online registration of complaints related to overpricing of medicines
+- Facility to report unavailability of essential medicines
+- Real-time tracking of complaint status
+- Mobile application for convenient access
+- Multilingual interface in 12 Indian languages
+
+"This portal puts power in the hands of consumers and creates accountability in pharmaceutical pricing," said Arunish Chawla, Secretary, Department of Pharmaceuticals, during the launch event in New Delhi. "Any citizen who finds a medicine being sold above the regulated price can now easily report it through this platform."
+
+## Streamlined Complaint Process
+
+The portal implements a streamlined process for addressing pricing complaints:
+
+1. Consumer registers a complaint with details of the medicine and pricing issue
+2. Complaint is automatically directed to the relevant regulatory authority
+3. National Pharmaceutical Pricing Authority (NPPA) investigates the complaint
+4. Action is taken against violators as per the Drugs (Prices Control) Order
+5. Complainant receives updates at each stage through SMS and email
+
+The average resolution time is expected to be 15-30 days, with priority given to complaints regarding essential medicines.
+
+## Enforcement Mechanisms
+
+To ensure compliance, the government has strengthened enforcement mechanisms:
+
+- Penalties for companies charging above ceiling prices can reach up to 100% of the overcharged amount
+- Repeated violations may result in prosecution under the Essential Commodities Act
+- State drug controllers have been authorized to inspect retail outlets
+- A dedicated enforcement cell has been established within NPPA
+
+"We have integrated databases of drug registrations and price controls to quickly identify violations," explained Kamlesh Kumar Pant, Chairman, NPPA. "This system will significantly reduce the time needed to verify complaints and take action."
+
+## Focus on Essential Medicines
+
+The initiative places special emphasis on essential medicines included in the National List of Essential Medicines (NLEM):
+
+- All 384 drugs on the NLEM are subject to price regulation
+- The portal features a searchable database of ceiling prices
+- Special flagging system for complaints related to life-saving medications
+- Direct integration with the Jan Aushadhi database for price comparison
+
+"This system will particularly benefit patients with chronic conditions who need long-term medication and are most affected by price variations," noted Dr. Y.K. Gupta, Principal Scientific Advisor, NPPA.
+
+## Industry Response
+
+The pharmaceutical industry has responded with cautious support. "We welcome transparency initiatives but request that the system consider legitimate reasons for price variations, such as GST differences across states and emergency distribution costs," said Sudarshan Jain, Secretary General, Indian Pharmaceutical Alliance.
+
+## Consumer Awareness Campaign
+
+To maximize the portal's effectiveness, the government has launched a nationwide awareness campaign:
+
+- Informational posters at all government hospitals and pharmacies
+- Social media campaign across multiple platforms
+- Television and radio advertisements in regional languages
+- Collaboration with consumer rights organizations
+
+"We aim to make every Indian aware that they have a mechanism to report medicine overpricing and expect action," said Arunish Chawla. "The success of this initiative depends on active citizen participation."
+
+## Early Response Statistics
+
+Though recently launched, the portal has already seen significant activity:
+
+- Over 5,000 complaints registered in the first week
+- 78% of complaints related to overpricing of chronic disease medications
+- 12% concerned cancer and rare disease drugs
+- Initial investigations have found merit in approximately 65% of complaints
+
+## Expert Analysis
+
+Health policy experts view the initiative as a significant step toward medicine price transparency. "This creates a direct channel between consumers and regulators, bypassing layers of bureaucracy that previously slowed down the complaint process," observed Dr. Sakthivel Selvaraj from the Public Health Foundation of India.
+
+Consumer rights activists have also welcomed the move. "For too long, patients have paid excessive prices for medicines without any recourse. This platform gives them a voice and mechanism for action," said Pushpa Girimaji, consumer rights expert.
+
+## Future Expansion Plans
+
+The government has outlined plans to expand the portal's capabilities:
+
+- Integration with e-pharmacy platforms for automated price verification
+- Addition of quality complaint features for reporting substandard medicines
+- Expanding coverage to include medical devices pricing
+- Development of a price comparison tool for different brands of the same medicine
+
+"This is just the first step in our broader digital health governance framework," concluded Chawla. "Our ultimate goal is complete price transparency and fair access to medications for all Indian citizens."`,
+        author: "Special Correspondent",
+        authorTitle: "",
+        source: "The Hindu",
+        sourceUrl: "https://www.thehindu.com/sci-tech/health/pharma-jan-samadhan-portal-launch",
+        topics: ["medicine pricing", "healthcare policy", "generic drugs", "digital health"],
+        publishedAt: "2023-11-08T00:00:00.000Z"
+      },
+      {
+        title: "Jan Aushadhi scheme saved patients ₹5,000 crore last year: Health Minister",
+        slug: "jan-aushadhi-saved-patients-5000-crore",
+        summary: "Union Health Minister announces that the Jan Aushadhi scheme helped patients save ₹5,000 crore in the last financial year through affordable generic medicines.",
+        content: `# Jan Aushadhi scheme saved patients ₹5,000 crore last year: Health Minister
+
+The Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP) has delivered estimated savings of ₹5,000 crore to patients across India in the previous financial year, Union Health Minister Dr. Mansukh Mandaviya announced during an address commemorating Jan Aushadhi Diwas.
+
+## Significant Financial Impact
+
+Speaking at the event in New Delhi, the Minister highlighted the scheme's growing financial impact:
+
+"Through the provision of quality generic medicines at affordable prices, the Jan Aushadhi scheme has helped patients save approximately ₹5,000 crore in the last financial year alone," Dr. Mandaviya stated. "Since the program's inception, the cumulative savings to citizens have crossed ₹20,000 crore."
+
+The scheme provides generic medicines at prices 50-90% lower than branded equivalents, making essential drugs accessible to millions of Indians who previously struggled with medication costs.
+
+## Expanding Network and Reach
+
+The Minister provided updated statistics on the program's expansion:
+
+- Over 9,500 Jan Aushadhi Kendras now operating across India
+- Coverage across all 739 districts in the country
+- More than 1,900 medicines and 285 surgical items available
+- Monthly sales exceeding ₹100 crore consistently for the past six months
+
+"We are on track to meet our target of 10,000 stores by March 2024," Dr. Mandaviya confirmed. "The focus of our expansion is now on ensuring coverage in remote and rural areas where access to affordable medicines has historically been challenging."
+
+The Minister noted that 55% of Jan Aushadhi stores are now located in rural and semi-urban areas, significantly improving pharmaceutical access in underserved regions.
+
+## Economic and Social Impacts
+
+Beyond direct savings to patients, the scheme has delivered broader economic and social benefits:
+
+- Creation of over 25,000 direct and indirect jobs
+- Entrepreneurship opportunities for pharmacists and healthcare professionals
+- Reduced catastrophic healthcare expenditure for vulnerable families
+- Improved medication adherence, particularly for chronic disease patients
+
+"We have data showing that medication adherence rates have improved by 28% among patients with chronic conditions who have switched to Jan Aushadhi medicines," the Minister explained. "This translates to better health outcomes and reduced hospitalization rates."
+
+## Quality Assurance Measures
+
+Addressing persistent concerns about generic medicine quality, Dr. Mandaviya emphasized the program's robust quality control framework:
+
+"Every batch of medicines is tested at NABL-accredited laboratories before distribution. In the past year, we have increased our random testing frequency by 40% and rejection rate for substandard products stands at approximately 5-6%, comparable to industry standards for branded drugs."
+
+The Minister also announced new initiatives to strengthen quality assurance:
+
+- Introduction of QR codes on packaging for authentication
+- Enhanced track-and-trace systems
+- Blacklisting of manufacturers with multiple quality violations
+- Public reporting of quality test results on the PMBJP website
+
+## Patient Testimonials and Impact Stories
+
+The event featured testimonials from beneficiaries across India who shared their experiences with Jan Aushadhi medicines:
+
+Venkatesh Murthy, a heart patient from Bangalore, described how his monthly medication expenditure dropped from ₹3,200 to just ₹800 after switching to Jan Aushadhi medicines.
+
+Similarly, Anjali Sharma from Lucknow, caring for her mother with Parkinson's disease, noted: "The financial relief has been immense. What cost us ₹4,500 monthly now costs less than ₹1,200, with no difference in effectiveness."
+
+## Challenges and Future Direction
+
+Dr. Mandaviya acknowledged ongoing challenges while outlining the future roadmap:
+
+"We continue to face resistance from some quarters due to entrenched commercial interests and misconceptions about generic medicines. Our focus is on education and awareness to overcome these barriers."
+
+Future initiatives announced include:
+
+- Expanding the product range to include advanced medical devices
+- Incorporating more specialized medications for rare diseases
+- Strengthening the supply chain to eliminate stockouts
+- Launching a dedicated mobile application for product information
+- Integrating with telemedicine platforms for comprehensive healthcare access
+
+## International Recognition
+
+The Minister highlighted international recognition of the program:
+
+"The World Health Organization has cited India's Jan Aushadhi model as an exemplary approach for increasing access to affordable medicines in developing countries. Several nations have expressed interest in implementing similar programs based on our model."
+
+## Expert Perspectives
+
+Healthcare economists attending the event provided their assessment:
+
+"The Jan Aushadhi scheme represents one of the most successful market interventions in pharmaceutical access globally," observed Dr. Sakthivel Selvaraj, Director of Health Economics at the Public Health Foundation of India. "It has demonstrated that quality generic medicines can be provided affordably while maintaining program sustainability."
+
+## Conclusion and Call to Action
+
+Dr. Mandaviya concluded with a call to action for healthcare providers and citizens:
+
+"I urge all doctors to prescribe generic medicines whenever appropriate, all pharmacists to maintain stocks of these affordable alternatives, and all citizens to explore Jan Aushadhi options before purchasing expensive branded drugs."
+
+The event closed with the announcement of a nationwide Jan Aushadhi awareness week featuring health camps, physician education programs, and public demonstrations of quality testing procedures.`,
+        author: "Health Correspondent",
+        authorTitle: "",
+        source: "The Times of India",
+        sourceUrl: "https://timesofindia.indiatimes.com/india/jan-aushadhi-saved-patients-5000-crore",
+        topics: ["jan aushadhi", "generic drugs", "healthcare affordability", "government initiatives"],
+        publishedAt: "2023-09-07T00:00:00.000Z"
+      }
+    ];
     
-    // Add articles to the store
-    articles.forEach(article => {
+    // Add all articles to the store
+    [...articles, ...newsArticles].forEach(article => {
       this.createBlogArticle(article);
     });
   }
