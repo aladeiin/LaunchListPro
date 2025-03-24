@@ -33,8 +33,12 @@ export default function Blog() {
   const getUniqueTopics = () => {
     if (!blogData) return [];
     const allTopics = blogData.articles.flatMap(article => article.topics);
-    const uniqueTopics = [...new Set(allTopics)];
-    return uniqueTopics.sort();
+    // Create an array of unique topics using object property uniqueness
+    const topicSet: Record<string, boolean> = {};
+    allTopics.forEach(topic => {
+      topicSet[topic] = true;
+    });
+    return Object.keys(topicSet).sort();
   };
 
   // Format date for display
