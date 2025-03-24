@@ -9,6 +9,10 @@ import Search from "@/pages/Search";
 import SymptomWizard from "@/pages/SymptomWizard";
 import Inventory from "@/pages/Inventory";
 import MedicineDetail from "@/pages/MedicineDetail";
+import Blog from "@/pages/Blog";
+import BlogDetail from "@/pages/BlogDetail";
+import BlogSearch from "@/pages/BlogSearch";
+import BlogTopic from "@/pages/BlogTopic";
 import { ThemeProvider } from "./lib/theme-context";
 
 function Router() {
@@ -21,6 +25,10 @@ function Router() {
       <Route path="/symptom-wizard" component={SymptomWizard} />
       <Route path="/inventory" component={Inventory} />
       <Route path="/medicine/:name" component={MedicineDetail} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/blog/search" component={BlogSearch} />
+      <Route path="/blog/topic/:topic" component={BlogTopic} />
+      <Route path="/blog/:slug" component={BlogDetail} />
       <Route component={NotFound} />
     </Switch>
   );

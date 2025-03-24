@@ -5,13 +5,6 @@ import { BlogArticle } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowLeft, Calendar, User, ExternalLink } from "lucide-react";
-import { marked } from 'marked';
-
-// Initialize marked with GitHub Flavored Markdown
-marked.setOptions({
-  gfm: true,
-  breaks: true
-});
 
 export default function BlogDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -41,10 +34,11 @@ export default function BlogDetail() {
     });
   };
 
-  // Convert markdown to HTML
-  const renderMarkdown = (content: string) => {
-    const rawHtml = marked.parse(content);
-    return { __html: rawHtml };
+  // Format text to paragraphs
+  const formatContent = (content: string) => {
+    return content.split('\n\n').map((paragraph, index) => 
+      <p key={index} className="mb-4">{paragraph}</p>
+    );
   };
 
   if (isLoading) {
@@ -131,7 +125,7 @@ export default function BlogDetail() {
 
       {/* Article content */}
       <div className="prose prose-green lg:prose-lg max-w-none mb-10">
-        <div dangerouslySetInnerHTML={renderMarkdown(article.content)} />
+        {formatContent(article.content)}
       </div>
 
       {/* Source citation */}
