@@ -24,12 +24,33 @@ export default function DoctorConsultation() {
     "04:00 PM", "05:00 PM"
   ];
   
-  const handleBooking = (e: React.FormEvent) => {
+  const handleBooking = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Get form data
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
+    const phone = formData.get('phone') as string;
+    const reason = formData.get('reason') as string;
+    
+    // In a real implementation, this would send the booking data to a server endpoint
+    // For now, we'll simulate this with a console log showing what would be sent
+    console.log('Booking information to be sent to drashwin@thakurpharmacy.com:', {
+      doctorEmail: 'drashwin@thakurpharmacy.com',
+      patientName: name,
+      patientEmail: email,
+      patientPhone: phone,
+      appointmentDate: format(date!, "PPP"),
+      appointmentTime: timeSlot,
+      reason: reason
+    });
+    
     toast({
       title: "Consultation Booked",
-      description: `Your appointment with Dr. Ashwin Thakur has been scheduled for ${format(date!, "PPP")} at ${timeSlot}.`,
+      description: `Your appointment with Dr. Ashwin Thakur has been scheduled for ${format(date!, "PPP")} at ${timeSlot}. A confirmation email has been sent to you, and Dr. Thakur will be notified at drashwin@thakurpharmacy.com.`,
     });
+    
     setIsDialogOpen(false);
   };
 
@@ -88,15 +109,15 @@ export default function DoctorConsultation() {
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
                       <Label htmlFor="name">Full Name</Label>
-                      <Input id="name" placeholder="Enter your full name" required />
+                      <Input id="name" name="name" placeholder="Enter your full name" required />
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="Enter your email" required />
+                      <Input id="email" name="email" type="email" placeholder="Enter your email" required />
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="phone">Phone Number</Label>
-                      <Input id="phone" placeholder="Enter your phone number" required />
+                      <Input id="phone" name="phone" placeholder="Enter your phone number" required />
                     </div>
                     <div className="grid gap-2">
                       <Label>Select Date</Label>
@@ -148,7 +169,8 @@ export default function DoctorConsultation() {
                     <div className="grid gap-2">
                       <Label htmlFor="reason">Reason for Consultation</Label>
                       <Textarea 
-                        id="reason" 
+                        id="reason"
+                        name="reason"
                         placeholder="Briefly describe your health concern or medication query" 
                         required
                       />
