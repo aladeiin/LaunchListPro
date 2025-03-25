@@ -64,7 +64,7 @@ export default function DoctorConsultation() {
               </div>
               <div className="flex items-start">
                 <div className="w-6 mr-2 flex-shrink-0 text-primary">•</div>
-                <p className="text-sm">Former consultant at AIIMS New Delhi</p>
+                <p className="text-sm">Member of Indian Medical Association</p>
               </div>
               <div className="flex items-start">
                 <div className="w-6 mr-2 flex-shrink-0 text-primary">•</div>
