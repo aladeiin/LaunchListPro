@@ -70,7 +70,7 @@ export default function DoctorConsultation() {
             </div>
             <CardTitle className="text-2xl text-center">Dr. Ashwin Thakur</CardTitle>
             <CardDescription className="text-center text-sm">
-              MD, General Medicine • 15+ Years Experience
+              BAMS • 5+ Years Experience
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
