@@ -13,6 +13,7 @@ import Blog from "@/pages/Blog";
 import BlogDetail from "@/pages/BlogDetail";
 import BlogSearch from "@/pages/BlogSearch";
 import BlogTopic from "@/pages/BlogTopic";
+import DoctorConsultation from "@/pages/DoctorConsultation";
 import { ThemeProvider } from "./lib/theme-context";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/symptom-wizard" component={SymptomWizard} />
       <Route path="/inventory" component={Inventory} />
       <Route path="/medicine/:name" component={MedicineDetail} />
+      <Route path="/doctor-consultation" component={DoctorConsultation} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/search" component={BlogSearch} />
       <Route path="/blog/topic/:topic" component={BlogTopic} />
