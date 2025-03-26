@@ -9,6 +9,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Send, Bot, User, Pill, Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Send, Bot, User, Pill, Loader2, Info, CheckCircle2, Lightbulb, Search, BookOpen } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
