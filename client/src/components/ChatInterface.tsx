@@ -18,12 +18,16 @@ import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Send, Bot, User, Pill, Loader2, Info, CheckCircle2, Lightbulb, Search, BookOpen } from 'lucide-react';
+import { Send, Bot, User, Pill, Loader2, Info, CheckCircle2, Lightbulb, Search, BookOpen, Coins } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
   message: string;
   isUserMessage: boolean;
+}
+
+interface ChatHistoryResponse {
+  messages: ChatMessage[];
 }
 
 export default function ChatInterface() {
@@ -37,7 +41,7 @@ export default function ChatInterface() {
   }, [userId]);
 
   // Fetch previous chat messages
-  const { data: chatHistory, isLoading: isLoadingHistory } = useQuery({
+  const { data: chatHistory, isLoading: isLoadingHistory } = useQuery<ChatHistoryResponse>({
     queryKey: ['/api/chat', userId],
     queryFn: getQueryFn({ on401: 'returnNull' }),
   });
@@ -47,7 +51,7 @@ export default function ChatInterface() {
   
   // Update messages when chat history is loaded
   useEffect(() => {
-    if (chatHistory && chatHistory.messages && Array.isArray(chatHistory.messages)) {
+    if (chatHistory && 'messages' in chatHistory && Array.isArray(chatHistory.messages)) {
       console.log("Chat history loaded:", chatHistory.messages);
       setMessages(
         chatHistory.messages.map((msg: any) => ({
@@ -160,109 +164,223 @@ export default function ChatInterface() {
     }
   }, [messages]);
 
+  // Add welcome message if no messages exist
+  useEffect(() => {
+    if (messages.length === 0 && 
+        !isLoadingHistory && 
+        chatHistory && 
+        'messages' in chatHistory && 
+        Array.isArray(chatHistory.messages) && 
+        chatHistory.messages.length === 0) {
+      const welcomeMessage: ChatMessage = {
+        id: uuidv4(),
+        message: "👋 Hello! I'm your AI Pharmacist assistant. I can help you with:\n\n" +
+                "• Finding information about medications\n" +
+                "• Checking potential drug interactions\n" +
+                "• Finding affordable generic alternatives\n" +
+                "• Understanding medication side effects\n" +
+                "• Answering questions about dosage\n\n" +
+                "How can I assist you today?",
+        isUserMessage: false
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, [messages.length, isLoadingHistory, chatHistory]);
+
+  // Generic facts for the sidebar
+  const genericFacts = [
+    {
+      title: "Cost Savings",
+      content: "Generic medicines in India typically cost 20-90% less than brand-name equivalents while maintaining the same efficacy."
+    },
+    {
+      title: "Quality Assurance",
+      content: "Generic drugs must meet the same quality, strength, purity and stability standards as brand-name medications."
+    },
+    {
+      title: "Jan Aushadhi Initiative",
+      content: "The Indian government's Jan Aushadhi scheme provides quality generic medicines at affordable prices through dedicated stores nationwide."
+    },
+    {
+      title: "Bioequivalence",
+      content: "Generic medicines contain the same active ingredients and are bioequivalent to their brand-name counterparts."
+    },
+    {
+      title: "Availability",
+      content: "More than 80% of prescriptions in India can be filled with available generic alternatives."
+    }
+  ];
+
+  // How to use the chatbot effectively
+  const chatbotUsageSteps = [
+    {
+      icon: <Search className="w-4 h-4 text-primary" />,
+      title: "Be Specific",
+      content: "Mention exact medication names, dosages, or specific concerns for more accurate answers."
+    },
+    {
+      icon: <BookOpen className="w-4 h-4 text-primary" />,
+      title: "Ask Follow-ups",
+      content: "Don't hesitate to ask follow-up questions if you need more details or clarification."
+    },
+    {
+      icon: <Lightbulb className="w-4 h-4 text-primary" />,
+      title: "Compare Options",
+      content: "Ask about alternatives or comparing different medications for your condition."
+    },
+    {
+      icon: <Coins className="w-4 h-4 text-primary" />,
+      title: "Find Cheaper Substitutes",
+      content: "Ask for affordable generic alternatives to expensive brand-name medications to save money."
+    },
+    {
+      icon: <CheckCircle2 className="w-4 h-4 text-primary" />,
+      title: "Verify Information",
+      content: "Always confirm important medical information with a healthcare professional."
+    }
+  ];
+
   return (
-    <Card className="mx-auto max-w-3xl border shadow-lg">
-      <CardHeader className="bg-primary/5">
-        <CardTitle className="flex items-center text-xl">
-          <Bot className="mr-2 h-5 w-5" />
-          PharmAssist
-          <Badge variant="outline" className="ml-2 bg-green-50">
-            <Pill className="mr-1 h-3 w-3" />
-            AI Pharmacist
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      
-      <ScrollArea ref={scrollAreaRef} className="h-[400px]">
-        <CardContent className="p-4">
-          {isLoadingHistory ? (
-            <div className="space-y-4">
-              <Skeleton className="h-16 w-2/3" />
-              <div className="flex justify-end">
+    <div className="flex flex-col lg:flex-row gap-4 mx-auto max-w-6xl">
+      <Card className="flex-grow border shadow-lg">
+        <CardHeader className="bg-primary/5">
+          <CardTitle className="flex items-center text-xl">
+            <Bot className="mr-2 h-5 w-5" />
+            PharmAssist
+            <Badge variant="outline" className="ml-2 bg-green-50">
+              <Pill className="mr-1 h-3 w-3" />
+              AI Pharmacist
+            </Badge>
+          </CardTitle>
+          <CardDescription>
+            Ask questions about medications, generics, side effects, and more
+          </CardDescription>
+        </CardHeader>
+        
+        <ScrollArea ref={scrollAreaRef} className="h-[400px]">
+          <CardContent className="p-4">
+            {isLoadingHistory ? (
+              <div className="space-y-4">
                 <Skeleton className="h-16 w-2/3" />
+                <div className="flex justify-end">
+                  <Skeleton className="h-16 w-2/3" />
+                </div>
+                <Skeleton className="h-16 w-3/4" />
               </div>
-              <Skeleton className="h-16 w-3/4" />
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-center p-8">
-              <div>
-                <Bot className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Ask the AI Pharmacist</h3>
-                <p className="text-muted-foreground max-w-md">
-                  Get answers about medications, potential drug interactions, 
-                  side effects, dosages, and more.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${
-                    msg.isUserMessage ? 'justify-end' : 'justify-start'
-                  }`}
-                >
+            ) : (
+              <div className="space-y-4">
+                {messages.map((msg) => (
                   <div
-                    className={`flex max-w-[80%] ${
-                      msg.isUserMessage ? 'flex-row-reverse' : 'flex-row'
+                    key={msg.id}
+                    className={`flex ${
+                      msg.isUserMessage ? 'justify-end' : 'justify-start'
                     }`}
                   >
-                    <Avatar className={`h-8 w-8 ${msg.isUserMessage ? 'ml-2' : 'mr-2'}`}>
-                      {msg.isUserMessage ? (
-                        <User className="h-4 w-4" />
-                      ) : (
-                        <Bot className="h-4 w-4" />
-                      )}
-                    </Avatar>
                     <div
-                      className={`rounded-lg p-3 ${
-                        msg.isUserMessage
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                      className={`flex max-w-[80%] ${
+                        msg.isUserMessage ? 'flex-row-reverse' : 'flex-row'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                      <Avatar className={`h-8 w-8 ${msg.isUserMessage ? 'ml-2' : 'mr-2'}`}>
+                        {msg.isUserMessage ? (
+                          <User className="h-4 w-4" />
+                        ) : (
+                          <Bot className="h-4 w-4" />
+                        )}
+                      </Avatar>
+                      <div
+                        className={`rounded-lg p-3 ${
+                          msg.isUserMessage
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                      </div>
                     </div>
+                  </div>
+                ))}
+                
+                {sendMessageMutation.isPending && (
+                  <div className="flex justify-start">
+                    <div className="flex max-w-[80%]">
+                      <Avatar className="h-8 w-8 mr-2">
+                        <Bot className="h-4 w-4" />
+                      </Avatar>
+                      <div className="rounded-lg p-3 bg-muted flex items-center">
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <p className="text-sm">Thinking...</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </ScrollArea>
+        
+        <CardFooter className="p-4 border-t">
+          <div className="flex w-full items-center space-x-2">
+            <Input
+              placeholder="Ask about medications, side effects, drug interactions..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={sendMessageMutation.isPending}
+            />
+            <Button 
+              onClick={handleSendMessage}
+              disabled={!message.trim() || sendMessageMutation.isPending}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
+      
+      {/* Facts section about generic medicines */}
+      <div className="w-full lg:w-80 space-y-4">
+        <Card className="border shadow-md">
+          <CardHeader className="bg-primary/5 pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Info className="mr-2 h-4 w-4" />
+              Generic Medicine Facts
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              {genericFacts.map((fact, index) => (
+                <div key={index} className={index > 0 ? "pt-2 border-t" : ""}>
+                  <h4 className="text-sm font-medium text-primary">{fact.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-1">{fact.content}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="border shadow-md">
+          <CardHeader className="bg-primary/5 pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Bot className="mr-2 h-4 w-4" />
+              How to Use the Chatbot
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              {chatbotUsageSteps.map((step, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <div className="mt-0.5">{step.icon}</div>
+                  <div>
+                    <h4 className="text-sm font-medium">{step.title}</h4>
+                    <p className="text-xs text-muted-foreground">{step.content}</p>
                   </div>
                 </div>
               ))}
-              
-              {sendMessageMutation.isPending && (
-                <div className="flex justify-start">
-                  <div className="flex max-w-[80%]">
-                    <Avatar className="h-8 w-8 mr-2">
-                      <Bot className="h-4 w-4" />
-                    </Avatar>
-                    <div className="rounded-lg p-3 bg-muted flex items-center">
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      <p className="text-sm">Thinking...</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
-          )}
-        </CardContent>
-      </ScrollArea>
-      
-      <CardFooter className="p-4 border-t">
-        <div className="flex w-full items-center space-x-2">
-          <Input
-            placeholder="Ask about medications, side effects, drug interactions..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={sendMessageMutation.isPending}
-          />
-          <Button 
-            onClick={handleSendMessage}
-            disabled={!message.trim() || sendMessageMutation.isPending}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardFooter>
-    </Card>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
