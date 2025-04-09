@@ -48,8 +48,22 @@ export default function Products() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Fetch medicines
-  const { data: medicinesData, isLoading, error } = useQuery<MedicinesResponse>({
+  const { data: medicinesData, isLoading, error, refetch } = useQuery<MedicinesResponse>({
     queryKey: ['/api/medicines', { page: currentPage, limit: 24 }],
+    queryFn: async () => {
+      console.log('Fetching medicines...');
+      const response = await fetch(`/api/medicines?page=${currentPage}&limit=24`);
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        console.error('Failed to fetch medicines:', response.statusText);
+        throw new Error('Failed to fetch medicines');
+      }
+      
+      const data = await response.json();
+      console.log('Medicines data:', data);
+      return data;
+    }
   });
 
   // Filter and sort medicines
@@ -133,6 +147,25 @@ export default function Products() {
       <Button variant="outline" onClick={resetFilters}>
         <RefreshCcw className="mr-2 h-4 w-4" />
         Reset Filters
+      </Button>
+    </div>
+  );
+  
+  // Render error state
+  const renderErrorState = () => (
+    <div className="text-center py-8">
+      <h3 className="text-lg font-medium mb-2 text-red-600">Unable to load medicines</h3>
+      <p className="text-gray-600 max-w-md mx-auto mb-4">
+        We're having trouble connecting to our medicine database. 
+        Our team has been notified of this issue.
+      </p>
+      <Button 
+        variant="outline" 
+        onClick={() => refetch()}
+        className="mx-auto"
+      >
+        <RefreshCcw className="mr-2 h-4 w-4" />
+        Try Again
       </Button>
     </div>
   );
