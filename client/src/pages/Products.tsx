@@ -23,8 +23,10 @@ import {
   Filter as FilterIcon,
   SlidersHorizontal,
   Pill,
-  RefreshCcw
+  RefreshCcw,
+  AlertCircle
 } from 'lucide-react';
+import ErrorState from '@/components/ErrorState';
 
 interface MedicinesResponse {
   data: Medicine[];
@@ -153,21 +155,10 @@ export default function Products() {
   
   // Render error state
   const renderErrorState = () => (
-    <div className="text-center py-8">
-      <h3 className="text-lg font-medium mb-2 text-red-600">Unable to load medicines</h3>
-      <p className="text-gray-600 max-w-md mx-auto mb-4">
-        We're having trouble connecting to our medicine database. 
-        Our team has been notified of this issue.
-      </p>
-      <Button 
-        variant="outline" 
-        onClick={() => refetch()}
-        className="mx-auto"
-      >
-        <RefreshCcw className="mr-2 h-4 w-4" />
-        Try Again
-      </Button>
-    </div>
+    <ErrorState 
+      message="We're having trouble connecting to our medicine database. Our team has been notified of this issue."
+      retry={() => refetch()}
+    />
   );
 
   // Render loading skeletons
@@ -324,7 +315,7 @@ export default function Products() {
                   {isLoading ? (
                     renderSkeletons()
                   ) : error ? (
-                    <p className="text-red-500">Error loading medicines.</p>
+                    renderErrorState()
                   ) : filteredMedicines.length === 0 ? (
                     renderEmptyState()
                   ) : (
@@ -350,7 +341,7 @@ export default function Products() {
                   {isLoading ? (
                     renderSkeletons()
                   ) : error ? (
-                    <p className="text-red-500">Error loading medicines.</p>
+                    renderErrorState()
                   ) : filteredMedicines.length === 0 ? (
                     renderEmptyState()
                   ) : (
@@ -376,7 +367,7 @@ export default function Products() {
                   {isLoading ? (
                     renderSkeletons()
                   ) : error ? (
-                    <p className="text-red-500">Error loading medicines.</p>
+                    renderErrorState()
                   ) : filteredMedicines.length === 0 ? (
                     renderEmptyState()
                   ) : (
