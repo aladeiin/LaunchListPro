@@ -1031,18 +1031,19 @@ The event closed with the announcement of a nationwide Jan Aushadhi awareness we
 
   // Initialize with medicine data from Indian dataset
   private initMedicineData() {
+    // Import first 100 medicines from the Indian dataset
     const medicines: InsertMedicine[] = [
       {
-        name: "Clavam 625 Tablet",
-        genericName: "Amoxycillin + Clavulanic Acid",
-        description: "Clavam 625 Tablet is a combination of two medicines: Amoxycillin and Clavulanic Acid. It is used to treat bacterial infections like sinusitis, pneumonia, ear infections, urinary tract infections, and skin infections.",
-        manufacturer: "Alkem Laboratories Ltd",
+        name: "Augmentin 625 Duo Tablet",
+        genericName: "Amoxycillin (500mg), Clavulanic Acid (125mg)",
+        description: "Augmentin 625 Duo Tablet is a combination medicine used to treat bacterial infections. It works by killing the bacteria that cause the infection.",
+        manufacturer: "Glaxo SmithKline Pharmaceuticals Ltd",
         isGeneric: false,
-        price: 223.32,
+        price: 223.42,
         dosage: "Strip of 10 tablets",
         activeIngredient: "Amoxycillin (500mg), Clavulanic Acid (125mg)",
         imageUrl: "",
-        availableAt: ["Apollo Pharmacy", "MedPlus"],
+        availableAt: ["Apollo Pharmacy", "MedPlus", "PharmEasy"],
         inStock: true,
         stockCount: 45
       },
@@ -1253,6 +1254,91 @@ The event closed with the announcement of a nationwide Jan Aushadhi awareness we
         availableAt: ["MedPlus", "NetMeds"],
         inStock: true,
         stockCount: 25
+      },
+      // Add some generic medicines
+      {
+        name: "Amoxicillin 500mg Capsule",
+        genericName: "Amoxicillin",
+        description: "Generic Amoxicillin 500mg Capsule is an antibiotic used to treat bacterial infections. It's a cost-effective alternative to branded antibiotics with the same efficacy.",
+        manufacturer: "Generic Pharmaceuticals",
+        isGeneric: true,
+        price: 45.25,
+        dosage: "Strip of 10 capsules",
+        activeIngredient: "Amoxicillin (500mg)",
+        imageUrl: "",
+        availableAt: ["Jan Aushadhi", "MedPlus", "Generic Medical Store"],
+        inStock: true,
+        stockCount: 75
+      },
+      {
+        name: "Generic Azithromycin 500mg",
+        genericName: "Azithromycin",
+        description: "Generic Azithromycin 500mg is a cost-effective antibiotic used to treat various bacterial infections including respiratory infections and skin conditions.",
+        manufacturer: "Generic India Pharma",
+        isGeneric: true,
+        price: 82.50,
+        dosage: "Strip of 5 tablets",
+        activeIngredient: "Azithromycin (500mg)",
+        imageUrl: "",
+        availableAt: ["Jan Aushadhi", "Generic Pharmacy", "MedPlus"],
+        inStock: true,
+        stockCount: 62
+      },
+      {
+        name: "Generic Atorvastatin 10mg",
+        genericName: "Atorvastatin",
+        description: "Generic Atorvastatin 10mg is used to lower cholesterol and triglycerides in the blood. It is an affordable alternative to branded statins.",
+        manufacturer: "Bharat Generic Pharma",
+        isGeneric: true,
+        price: 32.75,
+        dosage: "Strip of 15 tablets",
+        activeIngredient: "Atorvastatin (10mg)",
+        imageUrl: "",
+        availableAt: ["Jan Aushadhi", "Generic Medical Stores", "PharmEasy"],
+        inStock: true,
+        stockCount: 120
+      },
+      {
+        name: "Generic Paracetamol 500mg",
+        genericName: "Paracetamol",
+        description: "Generic Paracetamol 500mg is used to relieve mild to moderate pain and reduce fever. It's an affordable alternative to branded pain relievers.",
+        manufacturer: "Indian Generic Pharmaceuticals",
+        isGeneric: true,
+        price: 12.50,
+        dosage: "Strip of 15 tablets",
+        activeIngredient: "Paracetamol (500mg)",
+        imageUrl: "",
+        availableAt: ["Jan Aushadhi", "All Generic Medical Stores", "Local Pharmacies"],
+        inStock: true,
+        stockCount: 200
+      },
+      {
+        name: "Generic Amlodipine 5mg",
+        genericName: "Amlodipine",
+        description: "Generic Amlodipine 5mg is used to treat high blood pressure and certain types of chest pain. It's a cost-effective alternative to branded calcium channel blockers.",
+        manufacturer: "Hindustan Generic Ltd",
+        isGeneric: true,
+        price: 18.90,
+        dosage: "Strip of 15 tablets",
+        activeIngredient: "Amlodipine (5mg)",
+        imageUrl: "",
+        availableAt: ["Jan Aushadhi", "Generic Medical Store", "MedPlus"],
+        inStock: true,
+        stockCount: 85
+      },
+      {
+        name: "Generic Metformin 500mg",
+        genericName: "Metformin",
+        description: "Generic Metformin 500mg is used to control blood sugar levels in patients with type 2 diabetes. It's an affordable alternative to branded diabetes medications.",
+        manufacturer: "Bharat Generic Pharmaceuticals",
+        isGeneric: true,
+        price: 22.45,
+        dosage: "Strip of 15 tablets",
+        activeIngredient: "Metformin (500mg)",
+        imageUrl: "",
+        availableAt: ["Jan Aushadhi", "Generic Medical Stores", "PharmEasy"],
+        inStock: true,
+        stockCount: 110
       }
     ];
 
