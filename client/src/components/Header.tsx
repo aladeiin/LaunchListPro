@@ -39,6 +39,9 @@ export default function Header() {
           <Link href="/search" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
             Search
           </Link>
+          <Link href="/products" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
+            Products
+          </Link>
           <Link href="/dashboard" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
             Dashboard
           </Link>
