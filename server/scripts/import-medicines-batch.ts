@@ -86,7 +86,7 @@ async function importMedicineData() {
   
   const startTime = new Date();
   let importedCount = 0;
-  const MAX_MEDICINES = 200; // Limit to first 200 medicines
+  const MAX_MEDICINES = 400; // Limit to first 400 medicines
   
   try {
     if (!fs.existsSync(CSV_FILE_PATH)) {
