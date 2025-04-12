@@ -20,7 +20,7 @@ import {
   ArrowLeft,
   CheckCircle,
   ShieldCheck,
-  Pills,
+  Pill,
   Info,
   AlertCircle,
   FileText,
@@ -319,7 +319,7 @@ export default function GenericDetail() {
                     <p>{medicineInfo.description}</p>
                   </div>
                   <div className="flex items-start">
-                    <Pills className="text-green-500 mt-1 mr-2 h-5 w-5 flex-shrink-0" />
+                    <Pill className="text-green-500 mt-1 mr-2 h-5 w-5 flex-shrink-0" />
                     <div>
                       <p className="font-medium mb-1">Uses</p>
                       <p>{medicineInfo.uses}</p>
