@@ -1,0 +1,23 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Medicine box background -->
+  <rect x="50" y="80" width="200" height="140" rx="8" fill="#3f51b5" />
+  
+  <!-- Product name -->
+  <text x="150" y="130" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">METAPURE</text>
+  
+  <!-- Composition -->
+  <text x="150" y="160" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">Metoprolol 50mg</text>
+  
+  <!-- Aristo logo -->
+  <text x="150" y="190" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ffd700">ARISTO PHARMACEUTICALS</text>
+  
+  <!-- Tablet illustrations -->
+  <circle cx="100" cy="220" r="12" fill="white" />
+  <circle cx="135" cy="220" r="12" fill="white" />
+  <circle cx="170" cy="220" r="12" fill="white" />
+  
+  <!-- Detail lines on tablets -->
+  <line x1="94" y1="220" x2="106" y2="220" stroke="#c5cae9" stroke-width="1" />
+  <line x1="129" y1="220" x2="141" y2="220" stroke="#c5cae9" stroke-width="1" />
+  <line x1="164" y1="220" x2="176" y2="220" stroke="#c5cae9" stroke-width="1" />
+</svg>

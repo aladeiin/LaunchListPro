@@ -34,7 +34,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Telmikind",
     composition: "Telmisartan 40mg",
     category: "Cardiovascular",
-    image: "/images/aristo/telmikind.jpg",
+    image: "/images/aristo/telmikind.svg",
     price: 112.50,
     dosage: "40mg",
     packSize: "10 tablets",
@@ -45,7 +45,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Telmikind-H",
     composition: "Telmisartan 40mg + Hydrochlorothiazide 12.5mg",
     category: "Cardiovascular",
-    image: "/images/aristo/telmikind-h.jpg",
+    image: "/images/aristo/telmikind-h.svg",
     price: 138.75,
     dosage: "40mg/12.5mg",
     packSize: "10 tablets",
@@ -56,7 +56,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Glimestar-M",
     composition: "Glimepiride 1mg + Metformin 500mg",
     category: "Anti-Diabetic",
-    image: "/images/aristo/glimestar-m.jpg",
+    image: "/images/aristo/glimestar-m.svg",
     price: 98.50,
     dosage: "1mg/500mg",
     packSize: "10 tablets",
@@ -67,7 +67,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Clopilet",
     composition: "Clopidogrel 75mg",
     category: "Cardiovascular",
-    image: "/images/aristo/clopilet.jpg",
+    image: "/images/aristo/clopilet.svg",
     price: 142.00,
     dosage: "75mg",
     packSize: "10 tablets",
@@ -78,7 +78,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Orofer",
     composition: "Iron (as Ferric Hydroxide Polymaltose Complex) 100mg",
     category: "Haematinics",
-    image: "/images/aristo/orofer.jpg",
+    image: "/images/aristo/orofer.svg",
     price: 89.25,
     dosage: "100mg",
     packSize: "10 tablets",
@@ -89,7 +89,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Arip MT",
     composition: "Aripiprazole 10mg",
     category: "CNS",
-    image: "/images/aristo/arip-mt.jpg",
+    image: "/images/aristo/arip-mt.svg",
     price: 210.50,
     dosage: "10mg",
     packSize: "10 tablets",
@@ -100,7 +100,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Aristozyme",
     composition: "Digestive Enzymes",
     category: "Gastroenterology",
-    image: "/images/aristo/aristozyme.jpg",
+    image: "/images/aristo/aristozyme.svg",
     price: 65.80,
     dosage: "Standard",
     packSize: "10 tablets",
@@ -111,7 +111,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Doxolin",
     composition: "Doxofylline 400mg",
     category: "Respiratory",
-    image: "/images/aristo/doxolin.jpg",
+    image: "/images/aristo/doxolin.svg",
     price: 127.50,
     dosage: "400mg",
     packSize: "10 tablets",
@@ -122,7 +122,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Calcirol",
     composition: "Vitamin D3 60,000 IU",
     category: "Vitamins & Supplements",
-    image: "/images/aristo/calcirol.jpg",
+    image: "/images/aristo/calcirol.svg",
     price: 35.80,
     dosage: "60,000 IU",
     packSize: "4 capsules",
@@ -133,7 +133,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Pantocid",
     composition: "Pantoprazole 40mg",
     category: "Gastroenterology",
-    image: "/images/aristo/pantocid.jpg",
+    image: "/images/aristo/pantocid.svg",
     price: 78.50,
     dosage: "40mg",
     packSize: "10 tablets",
@@ -144,7 +144,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Atocor",
     composition: "Atorvastatin 10mg",
     category: "Cardiovascular",
-    image: "/images/aristo/atocor.jpg",
+    image: "/images/aristo/atocor.svg",
     price: 95.75,
     dosage: "10mg",
     packSize: "10 tablets",
@@ -155,7 +155,7 @@ const aristoProducts: AristoProduct[] = [
     name: "Metapure",
     composition: "Metoprolol 50mg",
     category: "Cardiovascular",
-    image: "/images/aristo/metapure.jpg",
+    image: "/images/aristo/metapure.svg",
     price: 56.25,
     dosage: "50mg",
     packSize: "10 tablets",
@@ -196,26 +196,16 @@ export default function Generics() {
       <CardContent className="flex-1 p-5 pt-6">
         {/* Image with badge overlay */}
         <div className="relative mb-4 bg-gray-100 rounded-md overflow-hidden flex items-center justify-center h-48">
-          <svg 
-            className="absolute w-full h-full text-gray-200" 
-            xmlns="http://www.w3.org/2000/svg" 
-            fill="none" 
-            viewBox="0 0 24 24"
-          >
-            <path 
-              stroke="currentColor" 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth="1" 
-              d="M13.5 3H12H8C6.34315 3 5 4.34315 5 6V18C5 19.6569 6.34315 21 8 21H16C17.6569 21 19 19.6569 19 18V8.625M13.5 3L19 8.625M13.5 3V8.625H19M9 13H15M9 17H12"
-            />
-          </svg>
+          <img 
+            src={product.image} 
+            alt={product.name}
+            className="w-full h-full object-contain p-2"
+          />
           <Badge 
             className="absolute top-2 right-2 z-10 bg-green-100 text-green-800 hover:bg-green-200"
           >
             Aristo
           </Badge>
-          <div className="text-center font-medium text-lg z-10">{product.name}</div>
         </div>
         
         <div className="space-y-3">
