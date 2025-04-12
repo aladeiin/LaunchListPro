@@ -1,0 +1,19 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Medicine box background -->
+  <rect x="50" y="80" width="200" height="140" rx="8" fill="#8b4513" />
+  
+  <!-- Product name -->
+  <text x="150" y="130" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">OROFER</text>
+  
+  <!-- Composition -->
+  <text x="150" y="155" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="white">Iron (as Ferric Hydroxide</text>
+  <text x="150" y="170" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="white">Polymaltose Complex) 100mg</text>
+  
+  <!-- Aristo logo -->
+  <text x="150" y="190" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ffd700">ARISTO PHARMACEUTICALS</text>
+  
+  <!-- Tablet illustrations -->
+  <ellipse cx="115" cy="220" rx="15" ry="8" fill="#f4a460" />
+  <ellipse cx="150" cy="220" rx="15" ry="8" fill="#f4a460" />
+  <ellipse cx="185" cy="220" rx="15" ry="8" fill="#f4a460" />
+</svg>
