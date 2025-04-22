@@ -1,88 +1,127 @@
 const XLSX = require('xlsx');
 const path = require('path');
-const fs = require('fs');
 
 // Path to the Excel file
 const filePath = path.resolve(__dirname, '../../attached_assets/brand data1.xlsx');
 
-function analyzeDrugBrands() {
+function analyzeExcelFile() {
   try {
-    console.log(`Reading drug-brand relationships from: ${filePath}`);
+    console.log(`Analyzing Excel file: ${filePath}`);
     
-    // Read with sheet options
-    const options = {
-      sheetRows: 30, // Read first 30 rows for sample
-    };
+    // Read the Excel file
+    const workbook = XLSX.readFile(filePath);
     
-    // Read the Excel file with options
-    const workbook = XLSX.readFile(filePath, options);
+    // Get sheet names
+    const sheetNames = workbook.SheetNames;
+    console.log(`The Excel file contains ${sheetNames.length} sheets:`);
     
-    // Target Sheet4 which contains drug-brand relationships
-    const sheetName = 'Sheet4';
-    const worksheet = workbook.Sheets[sheetName];
+    // Analyze each sheet
+    sheetNames.forEach(sheetName => {
+      const worksheet = workbook.Sheets[sheetName];
+      
+      // Get the range of the sheet
+      const range = XLSX.utils.decode_range(worksheet['!ref']);
+      const rowCount = range.e.r - range.s.r + 1;
+      const colCount = range.e.c - range.s.c + 1;
+      
+      console.log(`\nSheet: ${sheetName}`);
+      console.log(`  Rows: ${rowCount}`);
+      console.log(`  Columns: ${colCount}`);
+      
+      // Convert to JSON to analyze column names
+      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      if (data.length > 0) {
+        const headerRow = data[0];
+        console.log(`  Header row: ${JSON.stringify(headerRow)}`);
+        
+        // Sample a few rows
+        if (data.length > 1) {
+          console.log(`  Sample data (first 3 rows):`);
+          for (let i = 1; i < Math.min(4, data.length); i++) {
+            console.log(`    Row ${i}: ${JSON.stringify(data[i])}`);
+          }
+        }
+        
+        // For Sheet4 specifically, do a more detailed analysis
+        if (sheetName === 'Sheet4') {
+          analyzeSheet4Data(data);
+        }
+      }
+    });
     
-    if (!worksheet) {
-      console.error(`Sheet '${sheetName}' not found in the workbook`);
+  } catch (error) {
+    console.error('Error analyzing Excel file:', error);
+  }
+}
+
+function analyzeSheet4Data(data) {
+  try {
+    // Skip header row
+    const rows = data.slice(1);
+    console.log(`\nDetailed analysis of Sheet4 (Drug-Brand relationships):`);
+    
+    if (rows.length === 0) {
+      console.log('  No data rows found');
       return;
     }
     
-    // Convert to JSON
-    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+    // Identify relevant columns
+    let brandNameColIndex = -1;
+    let genericNameColIndex = -1;
     
-    // Display number of rows
-    console.log(`Number of drug-brand relationships (sample): ${jsonData.length}`);
-    
-    // Analyze data structure
-    if (jsonData.length > 0) {
-      // Display column headers
-      console.log('\nColumn Headers:');
-      const headers = Object.keys(jsonData[0]);
-      headers.forEach(header => console.log(`  - ${header}`));
-      
-      // Display sample rows
-      console.log('\nSample Drug-Brand Relationships:');
-      for (let i = 0; i < Math.min(20, jsonData.length); i++) {
-        const row = jsonData[i];
-        console.log(`\nRow ${i + 1}:`);
-        console.log(`Generic: ${row.Column8 || 'N/A'}`);
-        console.log(`Brand: ${row.Column1 || 'N/A'}`);
+    // Try to identify columns based on data
+    if (data[0] && data[0].length > 0) {
+      // Look for reasonable column indices
+      for (let i = 0; i < data[0].length; i++) {
+        if (typeof data[0][i] === 'string') {
+          if (data[0][i].toLowerCase().includes('brand')) {
+            brandNameColIndex = i;
+          } else if (data[0][i].toLowerCase().includes('generic')) {
+            genericNameColIndex = i;
+          }
+        }
       }
       
-      // Organize data by generic name
-      const drugMap = new Map();
-      
-      jsonData.forEach(row => {
-        const genericName = row.Column8;
-        const brandName = row.Column1;
-        
-        if (genericName && brandName) {
-          if (!drugMap.has(genericName)) {
-            drugMap.set(genericName, []);
-          }
-          drugMap.get(genericName).push(brandName);
-        }
-      });
-      
-      // Display organized data
-      console.log('\nDrug-Brand Organized Data (Sample):');
-      let count = 0;
-      for (const [genericName, brands] of drugMap.entries()) {
-        if (count >= 5) break; // Show only first 5 generics
-        
-        console.log(`\nGeneric: ${genericName}`);
-        console.log(`Available Brands (${brands.length}):`);
-        brands.slice(0, 5).forEach(brand => console.log(`  - ${brand}`));
-        if (brands.length > 5) {
-          console.log(`  ...and ${brands.length - 5} more brands`);
-        }
-        
+      // If columns couldn't be identified, use known indices
+      if (brandNameColIndex === -1) brandNameColIndex = 0; // First column
+      if (genericNameColIndex === -1) genericNameColIndex = 7; // Eighth column
+    }
+    
+    console.log(`  Using brand name column index: ${brandNameColIndex}`);
+    console.log(`  Using generic name column index: ${genericNameColIndex}`);
+    
+    // Count valid relationships
+    let validRelationships = 0;
+    let uniqueBrandNames = new Set();
+    let uniqueGenericNames = new Set();
+    
+    rows.forEach(row => {
+      if (row[brandNameColIndex] && row[genericNameColIndex]) {
+        validRelationships++;
+        uniqueBrandNames.add(row[brandNameColIndex]);
+        uniqueGenericNames.add(row[genericNameColIndex]);
+      }
+    });
+    
+    console.log(`  Total valid relationships: ${validRelationships}`);
+    console.log(`  Unique brand names: ${uniqueBrandNames.size}`);
+    console.log(`  Unique generic names: ${uniqueGenericNames.size}`);
+    
+    // Get a few sample relationships
+    console.log(`  Sample brand-generic relationships:`);
+    let count = 0;
+    for (let i = 0; i < rows.length && count < 5; i++) {
+      if (rows[i][brandNameColIndex] && rows[i][genericNameColIndex]) {
+        console.log(`    Brand: ${rows[i][brandNameColIndex]}, Generic: ${rows[i][genericNameColIndex]}`);
         count++;
       }
     }
     
   } catch (error) {
-    console.error('Error analyzing drug-brand relationships:', error);
+    console.error('Error during Sheet4 analysis:', error);
   }
 }
 
-analyzeDrugBrands();
+// Run the analysis
+analyzeExcelFile();

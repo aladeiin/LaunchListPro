@@ -1,0 +1,534 @@
+[
+  {
+    "id": 1,
+    "name": "Abamune Tablet",
+    "genericName": "Abacavir (300mg)",
+    "description": "Abamune Tablet (Abacavir (300mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 98,
+    "dosage": "300mg",
+    "activeIngredient": "Abacavir",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 20
+  },
+  {
+    "id": 2,
+    "name": "A Bec L 600mg/300mg Tablet",
+    "genericName": "Abacavir (600mg) ",
+    "description": "A Bec L 600mg/300mg Tablet (Abacavir (600mg) )",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 523,
+    "dosage": "600mg",
+    "activeIngredient": "Abacavir",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 21
+  },
+  {
+    "id": 3,
+    "name": "Abcixirel 10mg Injection",
+    "genericName": "Abciximab (10mg)",
+    "description": "Abcixirel 10mg Injection (Abciximab (10mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 158,
+    "dosage": "10mg",
+    "activeIngredient": "Abciximab",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 5
+  },
+  {
+    "id": 4,
+    "name": "Abatitor 250mg Tablet",
+    "genericName": "Abiraterone Acetate (250mg)",
+    "description": "Abatitor 250mg Tablet (Abiraterone Acetate (250mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 280,
+    "dosage": "250mg",
+    "activeIngredient": "Abiraterone Acetate",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 25
+  },
+  {
+    "id": 5,
+    "name": "Abione 500 Tablet",
+    "genericName": "Abiraterone Acetate (500mg)",
+    "description": "Abione 500 Tablet (Abiraterone Acetate (500mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 280,
+    "dosage": "500mg",
+    "activeIngredient": "Abiraterone Acetate",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 27
+  },
+  {
+    "id": 6,
+    "name": "Calquence 100mg Capsule",
+    "genericName": "Acalabrutinib (100mg)",
+    "description": "Calquence 100mg Capsule (Acalabrutinib (100mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 320,
+    "dosage": "100mg",
+    "activeIngredient": "Acalabrutinib",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 27
+  },
+  {
+    "id": 7,
+    "name": "Acampcon 333 Tablet",
+    "genericName": "Acamprosate (333mg)",
+    "description": "Acampcon 333 Tablet (Acamprosate (333mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 445,
+    "dosage": "333mg",
+    "activeIngredient": "Acamprosate",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 7
+  },
+  {
+    "id": 8,
+    "name": "AC 25mg Tablet",
+    "genericName": "Acarbose (25mg)",
+    "description": "AC 25mg Tablet (Acarbose (25mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 331,
+    "dosage": "25mg",
+    "activeIngredient": "Acarbose",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 33
+  },
+  {
+    "id": 9,
+    "name": "Acarjohn M Tablet",
+    "genericName": "Acarbose (25mg) ",
+    "description": "Acarjohn M Tablet (Acarbose (25mg) )",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 126,
+    "dosage": "25mg",
+    "activeIngredient": "Acarbose",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 9
+  },
+  {
+    "id": 10,
+    "name": "Abacus 50mg Tablet",
+    "genericName": "Acarbose (50mg)",
+    "description": "Abacus 50mg Tablet (Acarbose (50mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 477,
+    "dosage": "50mg",
+    "activeIngredient": "Acarbose",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 5
+  },
+  {
+    "id": 11,
+    "name": "Acobose M 50mg/500mg Tablet",
+    "genericName": "Acarbose (50mg) ",
+    "description": "Acobose M 50mg/500mg Tablet (Acarbose (50mg) )",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 253,
+    "dosage": "50mg",
+    "activeIngredient": "Acarbose",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 21
+  },
+  {
+    "id": 12,
+    "name": "AC Fresh Liquid",
+    "genericName": "Acarbose (NA)",
+    "description": "AC Fresh Liquid (Acarbose (NA))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 447,
+    "dosage": "Standard dosage",
+    "activeIngredient": "Acarbose",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 5
+  },
+  {
+    "id": 13,
+    "name": "A Xanthin 100mg Tablet",
+    "genericName": "Acebrophylline (100mg)",
+    "description": "A Xanthin 100mg Tablet (Acebrophylline (100mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 546,
+    "dosage": "100mg",
+    "activeIngredient": "Acebrophylline",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 12
+  },
+  {
+    "id": 14,
+    "name": "AB Pas N Tablet",
+    "genericName": "Acebrophylline (100mg) ",
+    "description": "AB Pas N Tablet (Acebrophylline (100mg) )",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 60,
+    "dosage": "100mg",
+    "activeIngredient": "Acebrophylline",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 29
+  },
+  {
+    "id": 15,
+    "name": "Abolin 100mg Syrup",
+    "genericName": "Acebrophylline (100mg/5ml)",
+    "description": "Abolin 100mg Syrup (Acebrophylline (100mg/5ml))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 414,
+    "dosage": "Standard dosage",
+    "activeIngredient": "Acebrophylline",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 12
+  },
+  {
+    "id": 16,
+    "name": "Altophylline Syrup",
+    "genericName": "Acebrophylline (10mg/5ml)",
+    "description": "Altophylline Syrup (Acebrophylline (10mg/5ml))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 448,
+    "dosage": "Standard dosage",
+    "activeIngredient": "Acebrophylline",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 9
+  },
+  {
+    "id": 17,
+    "name": "AB Phylline Syrup",
+    "genericName": "Acebrophylline (10mg/ml)",
+    "description": "AB Phylline Syrup (Acebrophylline (10mg/ml))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 471,
+    "dosage": "Standard dosage",
+    "activeIngredient": "Acebrophylline",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 11
+  },
+  {
+    "id": 18,
+    "name": "AB Day 200mg Capsule SR",
+    "genericName": "Acebrophylline (200mg)",
+    "description": "AB Day 200mg Capsule SR (Acebrophylline (200mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 523,
+    "dosage": "200mg",
+    "activeIngredient": "Acebrophylline",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 11
+  },
+  {
+    "id": 19,
+    "name": "Abisave M 200mg/10mg Tablet SR",
+    "genericName": "Acebrophylline (200mg) ",
+    "description": "Abisave M 200mg/10mg Tablet SR (Acebrophylline (200mg) )",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 307,
+    "dosage": "200mg",
+    "activeIngredient": "Acebrophylline",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 10
+  },
+  {
+    "id": 20,
+    "name": "Acezec 50mg Syrup",
+    "genericName": "Acebrophylline (50mg)",
+    "description": "Acezec 50mg Syrup (Acebrophylline (50mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 298,
+    "dosage": "50mg",
+    "activeIngredient": "Acebrophylline",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 7
+  },
+  {
+    "id": 21,
+    "name": "Abrofyl Syrup",
+    "genericName": "Acebrophylline (50mg/5ml)",
+    "description": "Abrofyl Syrup (Acebrophylline (50mg/5ml))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 81,
+    "dosage": "Standard dosage",
+    "activeIngredient": "Acebrophylline",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 23
+  },
+  {
+    "id": 22,
+    "name": "Acrub Gel",
+    "genericName": "Aceclofenac (1.5% w/w)",
+    "description": "Acrub Gel (Aceclofenac (1.5% w/w))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 320,
+    "dosage": "Standard dosage",
+    "activeIngredient": "Aceclofenac",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 7
+  },
+  {
+    "id": 23,
+    "name": "Diasdac Gel",
+    "genericName": "Aceclofenac (1.5% w/w) ",
+    "description": "Diasdac Gel (Aceclofenac (1.5% w/w) )",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 306,
+    "dosage": "Standard dosage",
+    "activeIngredient": "Aceclofenac",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 20
+  },
+  {
+    "id": 24,
+    "name": "Diclospar Nano Gel",
+    "genericName": "Aceclofenac (1.50% w/w) ",
+    "description": "Diclospar Nano Gel (Aceclofenac (1.50% w/w) )",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 527,
+    "dosage": "Standard dosage",
+    "activeIngredient": "Aceclofenac",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 26
+  },
+  {
+    "id": 25,
+    "name": "Adifax-P 100gm/500mg Tablet",
+    "genericName": "Aceclofenac (100gm) ",
+    "description": "Adifax-P 100gm/500mg Tablet (Aceclofenac (100gm) )",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 103,
+    "dosage": "100gm",
+    "activeIngredient": "Aceclofenac",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 22
+  },
+  {
+    "id": 26,
+    "name": "Aceran-SP Tablet",
+    "genericName": "Aceclofenac (100mcg) ",
+    "description": "Aceran-SP Tablet (Aceclofenac (100mcg) )",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 175,
+    "dosage": "100mcg",
+    "activeIngredient": "Aceclofenac",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 14
+  },
+  {
+    "id": 27,
+    "name": "A Niclo 100mg Tablet",
+    "genericName": "Aceclofenac (100mg)",
+    "description": "A Niclo 100mg Tablet (Aceclofenac (100mg))",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 385,
+    "dosage": "100mg",
+    "activeIngredient": "Aceclofenac",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 18
+  },
+  {
+    "id": 28,
+    "name": "A Clo P 100mg/325mg Tablet",
+    "genericName": "Aceclofenac (100mg) ",
+    "description": "A Clo P 100mg/325mg Tablet (Aceclofenac (100mg) )",
+    "manufacturer": "Various",
+    "isGeneric": false,
+    "price": 457,
+    "dosage": "100mg",
+    "activeIngredient": "Aceclofenac",
+    "imageUrl": "",
+    "availableAt": [
+      "Thakur Pharmacy",
+      "Apollo Pharmacy",
+      "MedPlus"
+    ],
+    "inStock": true,
+    "stockCount": 11
+  }
+]
