@@ -1,0 +1,349 @@
+// combined-api-integration.js
+// This module integrates multiple medication information APIs to provide comprehensive drug data
+
+// Import the individual API modules
+// import { getMedicationInformation, formatMedicationResponse } from './rxnorm-integration.js';
+// import { getOpenFDADrugInfo, formatOpenFDAResponse } from './openfda-integration.js';
+
+/**
+ * Comprehensive function to get medication information from multiple sources
+ * @param {string} drugName - Brand or generic name of the medication
+ * @returns {Promise<object>} - Combined medication data
+ */
+async function getComprehensiveMedicationInfo(drugName) {
+  // Get data from both APIs in parallel
+  const [rxnormData, fdaData] = await Promise.all([
+    getMedicationInformation(drugName),
+    getOpenFDADrugInfo(drugName)
+  ]);
+  
+  return {
+    found: rxnormData.found || fdaData.found,
+    name: drugName,
+    rxnormData: rxnormData,
+    fdaData: fdaData
+  };
+}
+
+/**
+ * Get drug interactions information from multiple sources
+ * @param {string} drug1 - First medication name
+ * @param {string} drug2 - Second medication name
+ * @returns {Promise<object>} - Combined interaction data
+ */
+async function getComprehensiveDrugInteractions(drug1, drug2) {
+  // Get RxCUIs for both drugs
+  const [rxcui1, rxcui2] = await Promise.all([
+    getRxCUI(drug1),
+    getRxCUI(drug2)
+  ]);
+  
+  // If we couldn't find RxCUIs for one or both drugs
+  if (!rxcui1 || !rxcui2) {
+    return {
+      found: false,
+      rxcuiMissing: !rxcui1 ? drug1 : drug2
+    };
+  }
+  
+  // Get interaction data from RxNorm
+  const interactions = await getDrugDrugInteractions(rxcui1, rxcui2);
+  
+  // Get additional data from FDA if we have time/resources
+  // This would be a more complex implementation
+
+  return {
+    found: true,
+    drug1: drug1,
+    drug2: drug2,
+    rxcui1: rxcui1,
+    rxcui2: rxcui2,
+    interactions: interactions
+  };
+}
+
+/**
+ * Format the combined medication data into a user-friendly response
+ * @param {object} data - Data from getComprehensiveMedicationInfo
+ * @param {string} queryType - Type of query
+ * @returns {string} - Formatted response
+ */
+function formatComprehensiveResponse(data, queryType) {
+  if (!data.found) {
+    return `I couldn't find information about ${data.name} in the medication databases. Please check the spelling or try a different medication name.`;
+  }
+  
+  let response = '';
+  
+  // Use data from both sources based on query type
+  switch (queryType) {
+    case 'general_info':
+      // Start with basic information
+      response = `**${data.name.toUpperCase()}**\n\n`;
+      
+      // Add classification info from RxNorm
+      if (data.rxnormData && data.rxnormData.found) {
+        const rxData = formatMedicationResponse(data.rxnormData);
+        if (rxData.drugClasses && rxData.drugClasses.length > 0) {
+          response += `**Classification:** ${rxData.drugClasses.join(', ')}\n\n`;
+        }
+        if (rxData.brandNames && rxData.brandNames.length > 0) {
+          response += `**Brand Names:** ${rxData.brandNames.join(', ')}\n\n`;
+        }
+      }
+      
+      // Add detailed info from FDA
+      if (data.fdaData && data.fdaData.found) {
+        const labelInfo = data.fdaData.labelInfo;
+        if (labelInfo.indications !== 'Not provided') {
+          response += `**Uses:** ${labelInfo.indications.substring(0, 300)}...\n\n`;
+        }
+        if (labelInfo.mechanismOfAction !== 'Not provided') {
+          response += `**Mechanism of Action:** ${labelInfo.mechanismOfAction.substring(0, 200)}...\n\n`;
+        }
+      }
+      
+      // Add warning about recalls if any
+      if (data.fdaData && data.fdaData.found && data.fdaData.recalls && data.fdaData.recalls.length > 0) {
+        response += `⚠️ **IMPORTANT: There are ${data.fdaData.recalls.length} recall(s) associated with this medication.** Please consult with a healthcare professional.\n\n`;
+      }
+      
+      response += `This information is compiled from the National Library of Medicine (RxNorm) and FDA databases and is for educational purposes only. Always consult with a healthcare professional for medical advice.`;
+      break;
+    
+    case 'side_effects':
+      response = `**Side Effects of ${data.name.toUpperCase()}**\n\n`;
+      
+      // Use FDA data for side effects as it's more comprehensive
+      if (data.fdaData && data.fdaData.found) {
+        const labelInfo = data.fdaData.labelInfo;
+        
+        if (labelInfo.adverseReactions !== 'Not provided') {
+          response += `**Adverse Reactions:** ${labelInfo.adverseReactions.substring(0, 500)}...\n\n`;
+        }
+        
+        if (data.fdaData.adverseEvents && data.fdaData.adverseEvents.commonReactions) {
+          response += `**Most Commonly Reported Adverse Events:**\n`;
+          data.fdaData.adverseEvents.commonReactions.forEach(reaction => {
+            response += `- ${reaction.reaction} (${reaction.count} reports)\n`;
+          });
+          response += `\nBased on ${data.fdaData.adverseEvents.totalReports} total reports to the FDA.\n\n`;
+        }
+        
+        if (labelInfo.warnings !== 'Not provided') {
+          response += `**Warnings:** ${labelInfo.warnings.substring(0, 300)}...\n\n`;
+        }
+      } else {
+        response += `Detailed side effect information is not available in the databases I have access to. Please consult with a healthcare professional or refer to the medication package insert for comprehensive side effect information.\n\n`;
+      }
+      
+      response += `This information is compiled from the National Library of Medicine (RxNorm) and FDA databases and is for educational purposes only. Always consult with a healthcare professional for medical advice.`;
+      break;
+    
+    case 'interactions':
+      response = `**Drug Interactions for ${data.name.toUpperCase()}**\n\n`;
+      
+      // Combine interaction data from both sources
+      let interactionsFound = false;
+      
+      // RxNorm interactions
+      if (data.rxnormData && data.rxnormData.found) {
+        const rxData = formatMedicationResponse(data.rxnormData);
+        if (rxData.interactionWarnings && rxData.interactionWarnings.length > 0) {
+          response += `**Potential Interactions (from RxNorm):**\n`;
+          rxData.interactionWarnings.forEach(warning => {
+            response += `- ${warning}\n`;
+          });
+          response += `\n`;
+          interactionsFound = true;
+        }
+      }
+      
+      // FDA interactions
+      if (data.fdaData && data.fdaData.found) {
+        const labelInfo = data.fdaData.labelInfo;
+        if (labelInfo.drugInteractions !== 'Not provided') {
+          response += `**Drug Interactions (from FDA Label):**\n${labelInfo.drugInteractions.substring(0, 500)}...\n\n`;
+          interactionsFound = true;
+        }
+      }
+      
+      if (!interactionsFound) {
+        response += `Specific drug interaction information is not available in the databases I have access to. This does not mean that there are no interactions. Please consult with a healthcare professional about potential drug interactions.\n\n`;
+      }
+      
+      response += `This information is compiled from the National Library of Medicine (RxNorm) and FDA databases and is for educational purposes only. Always consult with a healthcare professional before combining medications.`;
+      break;
+    
+    case 'dosage':
+      response = `**Dosage Information for ${data.name.toUpperCase()}**\n\n`;
+      
+      // FDA has better dosage information
+      if (data.fdaData && data.fdaData.found) {
+        const labelInfo = data.fdaData.labelInfo;
+        if (labelInfo.dosageAdministration !== 'Not provided') {
+          response += `${labelInfo.dosageAdministration.substring(0, 800)}...\n\n`;
+        } else {
+          response += `Detailed dosage information is not provided in the FDA database for this medication. Please consult with a healthcare professional for specific dosing instructions.\n\n`;
+        }
+      } else {
+        response += `Detailed dosage information is not available in the databases I have access to. Please consult with a healthcare professional for specific dosing instructions.\n\n`;
+      }
+      
+      response += `This information is compiled from the National Library of Medicine (RxNorm) and FDA databases and is for educational purposes only. Always follow your healthcare provider's specific instructions.`;
+      break;
+    
+    case 'indications':
+      response = `**Uses/Indications for ${data.name.toUpperCase()}**\n\n`;
+      
+      // FDA has better indication information
+      if (data.fdaData && data.fdaData.found) {
+        const labelInfo = data.fdaData.labelInfo;
+        if (labelInfo.indications !== 'Not provided') {
+          response += `${labelInfo.indications}\n\n`;
+        } else {
+          response += `Specific indication information is not provided in the FDA database for this medication. Please consult with a healthcare professional.\n\n`;
+        }
+        
+        if (labelInfo.mechanismOfAction !== 'Not provided') {
+          response += `**Mechanism of Action:** ${labelInfo.mechanismOfAction.substring(0, 300)}...\n\n`;
+        }
+      } else {
+        response += `Detailed indication information is not available in the databases I have access to. Please consult with a healthcare professional for information about what this medication is used for.\n\n`;
+      }
+      
+      response += `This information is compiled from the National Library of Medicine (RxNorm) and FDA databases and is for educational purposes only. Always consult with a healthcare professional for medical advice.`;
+      break;
+    
+    default:
+      // Default to a comprehensive overview
+      response = `**${data.name.toUpperCase()}**\n\n`;
+      
+      // Add basic info from RxNorm
+      if (data.rxnormData && data.rxnormData.found) {
+        const rxData = formatMedicationResponse(data.rxnormData);
+        if (rxData.drugClasses && rxData.drugClasses.length > 0) {
+          response += `**Classification:** ${rxData.drugClasses.join(', ')}\n\n`;
+        }
+      }
+      
+      // Add FDA info
+      if (data.fdaData && data.fdaData.found) {
+        const labelInfo = data.fdaData.labelInfo;
+        
+        if (labelInfo.indications !== 'Not provided') {
+          response += `**Uses:** ${labelInfo.indications.substring(0, 200)}...\n\n`;
+        }
+        
+        if (labelInfo.adverseReactions !== 'Not provided') {
+          response += `**Common Side Effects:** ${labelInfo.adverseReactions.substring(0, 200)}...\n\n`;
+        }
+        
+        if (data.fdaData.recalls && data.fdaData.recalls.length > 0) {
+          response += `⚠️ **IMPORTANT: There are ${data.fdaData.recalls.length} recall(s) associated with this medication.** Please consult with a healthcare professional.\n\n`;
+        }
+      }
+      
+      response += `This information is compiled from the National Library of Medicine (RxNorm) and FDA databases and is for educational purposes only. Always consult with a healthcare professional for medical advice.`;
+  }
+  
+  return response;
+}
+
+/**
+ * Format drug-drug interaction data
+ * @param {object} data - Data from getComprehensiveDrugInteractions
+ * @returns {string} - Formatted response
+ */
+function formatInteractionResponse(data) {
+  if (!data.found) {
+    return `I couldn't find information about ${data.rxcuiMissing} in the medication databases. Please check the spelling or try a different medication name.`;
+  }
+  
+  let response = `**Interaction Information: ${data.drug1.toUpperCase()} and ${data.drug2.toUpperCase()}**\n\n`;
+  
+  let interactionsFound = false;
+  let interactionDescriptions = [];
+  
+  // Process interaction data
+  if (data.interactions && data.interactions.length > 0) {
+    data.interactions.forEach(group => {
+      if (group.interactionType && group.interactionType.interaction) {
+        group.interactionType.interaction.forEach(interaction => {
+          if (interaction.interactionPair) {
+            interaction.interactionPair.forEach(pair => {
+              if (pair.description) {
+                interactionDescriptions.push(pair.description);
+              }
+            });
+          }
+        });
+      }
+    });
+    
+    if (interactionDescriptions.length > 0) {
+      response += `The following potential interactions have been identified:\n\n`;
+      interactionDescriptions.forEach(desc => {
+        response += `- ${desc}\n`;
+      });
+      interactionsFound = true;
+    }
+  }
+  
+  if (!interactionsFound) {
+    response += `No specific interactions were found between ${data.drug1} and ${data.drug2} in the National Library of Medicine database. However, this doesn't guarantee there are no interactions.\n\n`;
+  }
+  
+  response += `\nThis information is from the National Library of Medicine's RxNorm database and is for educational purposes only. Always consult with a healthcare professional before combining medications.`;
+  
+  return response;
+}
+
+/**
+ * Main function to process medication messages with comprehensive data
+ * @param {string} userMessage - Message from the user
+ * @returns {Promise<object>} Response object with type and message
+ */
+async function processComprehensiveMedicationMessage(userMessage) {
+  // Use your existing analyzeMedicationQuery function to determine if this is a medication query
+  const query = analyzeMedicationQuery(userMessage);
+  
+  if (!query) {
+    // Not a medication query, let your regular chatbot handle it
+    return {
+      type: 'not_medication_query',
+      message: null
+    };
+  }
+  
+  let response;
+  
+  // For specific drug-drug interactions
+  if (query.type === 'specific_interaction' && query.medication1 && query.medication2) {
+    const interactionData = await getComprehensiveDrugInteractions(query.medication1, query.medication2);
+    response = formatInteractionResponse(interactionData);
+  } 
+  // For all other query types
+  else {
+    const medicationName = query.medication;
+    const comprehensiveData = await getComprehensiveMedicationInfo(medicationName);
+    response = formatComprehensiveResponse(comprehensiveData, query.queryType);
+  }
+  
+  return {
+    type: 'medication_response',
+    message: response,
+    queryInfo: query
+  };
+}
+
+// Export functions if using modules
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    getComprehensiveMedicationInfo,
+    getComprehensiveDrugInteractions,
+    formatComprehensiveResponse,
+    formatInteractionResponse,
+    processComprehensiveMedicationMessage
+  };
+}

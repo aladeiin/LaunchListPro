@@ -1,4 +1,9 @@
 import OpenAI from "openai";
+import { 
+  getComprehensiveMedicationInfo, 
+  formatMedicationResponse,
+  detectMedicationQueryType
+} from "./lib/medication-api-integration";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -125,6 +130,29 @@ export async function getChatResponse(userMessage: string): Promise<string> {
   const sanitizedMessage = userMessage.trim().substring(0, 1000); // Limit message length to 1000 characters
   console.log("[OPENAI-CHAT] Sanitized message length:", sanitizedMessage.length);
   
+  // First, check if this is a medication-related query
+  const medicationQuery = detectMedicationQueryType(sanitizedMessage);
+  
+  // If we detected a medication query and extracted a medication name
+  if (medicationQuery.queryType !== 'unknown' && medicationQuery.medicineName) {
+    try {
+      console.log(`[MEDICATION-API] Detected ${medicationQuery.queryType} query for "${medicationQuery.medicineName}"`);
+      
+      // Get comprehensive medication info
+      const medicationInfo = await getComprehensiveMedicationInfo(medicationQuery.medicineName);
+      
+      // Format the response based on query type
+      const response = formatMedicationResponse(medicationInfo, medicationQuery.queryType);
+      
+      console.log("[MEDICATION-API] Successfully processed medication query");
+      return response + "\n\n(Note: This information is for educational purposes only. Always consult a healthcare professional for medical advice.)";
+    } catch (error) {
+      console.error("[MEDICATION-API] Error processing medication query:", error);
+      // If medication API fails, fall back to OpenAI
+    }
+  }
+  
+  // If not a medication query or if medication processing failed, use OpenAI
   try {
     console.log("[OPENAI-CHAT] Sending request to OpenAI");
     
