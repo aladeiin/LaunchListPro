@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient, getQueryFn } from '../lib/queryClient';
 import { v4 as uuidv4 } from 'uuid';
+import { processMedicationMessage } from '../lib/chatbot-integration';
 
 import {
   Card,
@@ -128,7 +129,7 @@ export default function ChatInterface() {
     },
   });
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim()) return;
     
     // Add the user message to the chat
@@ -140,17 +141,57 @@ export default function ChatInterface() {
     
     setMessages((prev) => [...prev, newMessage]);
     
-    // Send the message to the API
-    sendMessageMutation.mutate(message.trim());
+    // Store the message text for processing
+    const userMessageText = message.trim();
     
-    // Clear the input
+    // Clear the input immediately after sending
     setMessage('');
+    
+    // First check if it's a medication-related query
+    try {
+      const medicationResponse = await processMedicationMessage(userMessageText);
+      
+      if (medicationResponse.type === 'medication_response') {
+        // It's a medication query, add the response to chat
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: uuidv4(),
+            message: medicationResponse.message,
+            isUserMessage: false,
+          },
+        ]);
+        
+        // Add to chat history via API for persistence
+        apiRequest('/api/chat', {
+          method: 'POST',
+          body: JSON.stringify({
+            userId,
+            message: medicationResponse.message,
+            isUserMessage: false,
+          }),
+        }).catch(error => {
+          console.error("Error saving medication response to history:", error);
+        });
+        
+        // Invalidate the chat history query to refresh the data
+        queryClient.invalidateQueries({ queryKey: ['/api/chat', userId] });
+        
+        return; // Exit early, we've handled the message locally
+      }
+    } catch (error) {
+      console.error("Error processing medication message:", error);
+      // Continue with regular processing if medication processing fails
+    }
+    
+    // Not a medication query or medication processing failed, send to the API
+    sendMessageMutation.mutate(userMessageText);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      void handleSendMessage();
     }
   };
 
@@ -329,7 +370,7 @@ export default function ChatInterface() {
               disabled={sendMessageMutation.isPending}
             />
             <Button 
-              onClick={handleSendMessage}
+              onClick={() => void handleSendMessage()}
               disabled={!message.trim() || sendMessageMutation.isPending}
             >
               <Send className="h-4 w-4" />
