@@ -207,12 +207,20 @@ function formatAlternativesResponse(info: MedicationInfo): string {
   }
   
   let response = `**${info.name}** contains ${info.activeIngredient || info.genericName}.\n\n`;
+  
+  if (info.description) {
+    response += `${info.description}\n\n`;
+  }
+  
   response += `Here are some alternatives with the same active ingredient:\n\n`;
   
   // Get up to 5 alternatives
   const topAlternatives = info.alternatives.slice(0, 5);
   
-  topAlternatives.forEach((alt, index) => {
+  // Sort alternatives by price (cheapest first)
+  const sortedAlternatives = [...topAlternatives].sort((a, b) => a.price - b.price);
+  
+  sortedAlternatives.forEach((alt, index) => {
     const savingsPercent = info.name !== alt.name && alt.price > 0 && info.price > 0
       ? Math.floor(((info.price - alt.price) / info.price) * 100)
       : 0;
@@ -228,6 +236,17 @@ function formatAlternativesResponse(info: MedicationInfo): string {
   
   if (info.alternatives.length > 5) {
     response += `\nI found a total of ${info.alternatives.length} alternatives for this medicine.\n\n`;
+  }
+  
+  // Add a summary of potential savings with the cheapest alternative
+  if (sortedAlternatives.length > 0) {
+    const cheapestAlt = sortedAlternatives[0];
+    if (cheapestAlt && cheapestAlt.price < info.price) {
+      const savings = info.price - cheapestAlt.price;
+      const savingsPercent = (savings / info.price) * 100;
+      
+      response += `**Potential Savings:** By switching to ${cheapestAlt.name}, you could save ₹${savings.toFixed(2)} (${savingsPercent.toFixed(0)}% less).\n\n`;
+    }
   }
   
   response += `Remember, it's important to consult your healthcare provider before making any changes to your medication regimen.`;
