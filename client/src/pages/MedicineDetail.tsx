@@ -34,6 +34,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Check, AlertTriangle, Info, PlusCircle, Activity } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Medicine } from '@shared/schema';
+import MedicineAlternatives from '@/components/MedicineAlternatives';
 
 // Define the API response types
 interface MedicineResponse extends Medicine {}
@@ -103,11 +104,13 @@ const MedicineDetail = () => {
   
   // Price alert handler
   const handleSetPriceAlert = () => {
-    toast({
-      title: "Price Alert Set",
-      description: `We'll notify you when ${medicine?.name} drops below ${formatPrice(medicine?.price * 0.9)}`,
-      variant: "default",
-    });
+    if (medicine?.price) {
+      toast({
+        title: "Price Alert Set",
+        description: `We'll notify you when ${medicine?.name} drops below ${formatPrice(medicine.price * 0.9)}`,
+        variant: "default",
+      });
+    }
   };
 
   // Handle error states
@@ -308,68 +311,8 @@ const MedicineDetail = () => {
             
             {/* Alternatives Tab */}
             <TabsContent value="alternatives" className="py-4">
-              {isLoadingAlternatives ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Array(6).fill(0).map((_, i) => (
-                    <Card key={i} className="border animate-pulse">
-                      <CardHeader className="pb-2">
-                        <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2 mt-2"></div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : alternativesData?.data?.length ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {alternativesData.data.map((alternative: any) => (
-                    <Link key={alternative.id} href={`/medicine/${encodeURIComponent(alternative.name)}`}>
-                      <a className="block h-full">
-                        <Card className="border h-full hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-lg font-semibold text-green-700">
-                              {alternative.name}
-                            </CardTitle>
-                            <p className="text-sm text-gray-500">{alternative.manufacturer}</p>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <span className="text-lg font-bold text-green-700">
-                                {formatPrice(alternative.price)}
-                              </span>
-                              {alternative.savingsPercentage > 0 && (
-                                <Badge className="bg-green-100 text-green-800">
-                                  Save {alternative.savingsPercentage}%
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Badge className={alternative.isGeneric ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}>
-                                {alternative.isGeneric ? "Generic" : "Branded"}
-                              </Badge>
-                              <Badge className={alternative.inStock ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                                {alternative.inStock ? "In Stock" : "Out of Stock"}
-                              </Badge>
-                            </div>
-                            <div className="pt-2">
-                              <Button size="sm" className="w-full bg-green-600 hover:bg-green-700">
-                                View Details
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </a>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                  <p className="text-gray-500">No alternatives found for this medicine.</p>
-                </div>
+              {medicine && (
+                <MedicineAlternatives medicineName={medicine.name} limit={10} />
               )}
             </TabsContent>
             
