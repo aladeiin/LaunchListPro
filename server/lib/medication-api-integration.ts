@@ -33,40 +33,100 @@ export interface MedicationInfo {
  */
 export async function getComprehensiveMedicationInfo(medicineName: string): Promise<MedicationInfo> {
   try {
+    console.log(`[MEDICATION-API] Looking up information for: ${medicineName}`);
+    
+    // Check our enhanced Indian medicine context first
+    const indianContext = getMedicineContext(medicineName);
+    console.log(`[MEDICATION-API] Indian medicine context:`, indianContext?.isKnownMedicine ? "Found" : "Not found");
+    
+    // Parse price from Indian context if available
+    let contextPrice = 0;
+    if (indianContext?.isKnownMedicine && indianContext.priceRange) {
+      const priceParts = indianContext.priceRange.split('-');
+      if (priceParts.length > 0) {
+        const priceStr = priceParts[0].replace('₹', '').trim();
+        contextPrice = parseFloat(priceStr) || 0;
+      }
+    }
+    
     // Try to find the medicine in our database
     const medicine = await storage.getMedicineByName(medicineName);
     
+    // If we have context but no database entry, try to look up by generic name
+    let alternativeMedicine = null;
+    if (!medicine && indianContext?.isKnownMedicine && indianContext.alternativeBrand) {
+      alternativeMedicine = await storage.getMedicineByName(indianContext.alternativeBrand);
+    }
+    
+    // Determine best active ingredient from all available sources
+    const activeIngredient = medicine?.activeIngredient || 
+                            (indianContext?.isKnownMedicine ? indianContext.genericName : '') ||
+                            alternativeMedicine?.activeIngredient || '';
+    
     // Find alternatives with the same active ingredient
     let alternatives: Medicine[] = [];
-    if (medicine) {
-      const allMedicines = await storage.getMedicines();
-      alternatives = allMedicines.filter(med => 
-        med.id !== medicine.id && 
-        med.activeIngredient?.toLowerCase() === medicine.activeIngredient?.toLowerCase()
-      );
+    if (activeIngredient) {
+      try {
+        const allMedicines = await storage.getMedicines();
+        alternatives = allMedicines.filter(med => 
+          (medicine ? med.id !== medicine.id : med.name !== medicineName) && 
+          med.activeIngredient?.toLowerCase() === activeIngredient.toLowerCase()
+        );
+        
+        // Sort by price (cheapest first)
+        alternatives.sort((a, b) => a.price - b.price);
+        
+        console.log(`[MEDICATION-API] Found ${alternatives.length} alternatives with active ingredient: ${activeIngredient}`);
+      } catch (err) {
+        console.error(`[MEDICATION-API] Error finding alternatives:`, err);
+      }
       
-      // Sort by price (cheapest first)
-      alternatives.sort((a, b) => a.price - b.price);
+      // If we don't have alternatives from database but have context data,
+      // add the alternative from our Indian context
+      if (alternatives.length === 0 && indianContext?.isKnownMedicine && indianContext.alternativeBrand) {
+        console.log(`[MEDICATION-API] Adding alternative from Indian context: ${indianContext.alternativeBrand}`);
+        
+        const altPrice = contextPrice * 0.7; // Assume generic is about 30% cheaper
+        alternatives.push({
+          id: 9999, // Placeholder ID
+          name: indianContext.alternativeBrand,
+          genericName: indianContext.genericName,
+          activeIngredient: indianContext.genericName,
+          description: `Generic alternative to ${medicineName}`,
+          manufacturer: "Available at Jan Aushadhi",
+          isGeneric: true,
+          price: altPrice > 0 ? altPrice : 100,
+          inStock: true,
+          dosage: "",
+          imageUrl: "",
+          availableAt: ["Jan Aushadhi Stores"],
+          stockCount: 10,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
     }
     
     // Use OpenAI to fill in missing information
     const aiGeneratedInfo = await getAIMedicationInfo(
       medicine?.name || medicineName,
-      medicine?.activeIngredient || '',
-      medicine?.genericName || ''
+      activeIngredient,
+      medicine?.genericName || (indianContext?.isKnownMedicine ? indianContext.genericName : '')
     );
     
     return {
       name: medicine?.name || medicineName,
-      genericName: medicine?.genericName || aiGeneratedInfo.genericName || '',
-      activeIngredient: medicine?.activeIngredient || aiGeneratedInfo.activeIngredient || '',
+      genericName: medicine?.genericName || 
+                  (indianContext?.isKnownMedicine ? indianContext.genericName : '') || 
+                  aiGeneratedInfo.genericName || '',
+      activeIngredient: activeIngredient || aiGeneratedInfo.activeIngredient || '',
       alternatives: alternatives,
       description: medicine?.description || aiGeneratedInfo.description || '',
       sideEffects: aiGeneratedInfo.sideEffects || [],
       interactions: aiGeneratedInfo.interactions || [],
       dosage: medicine?.dosage || aiGeneratedInfo.dosage || '',
       usage: aiGeneratedInfo.usage || '',
-      price: medicine?.price || 0
+      price: medicine?.price || contextPrice || 0
     };
   } catch (error) {
     console.error('Error getting comprehensive medication info:', error);
@@ -88,19 +148,24 @@ async function getAIMedicationInfo(
 ): Promise<Partial<MedicationInfo>> {
   try {
     const prompt = `
-      Provide comprehensive information about the medication "${medicineName}" in JSON format.
+      Provide comprehensive information about the medication "${medicineName}" for the Indian market in JSON format.
       ${activeIngredient ? `Active ingredient: ${activeIngredient}` : ''}
       ${genericName ? `Generic name: ${genericName}` : ''}
+      
+      This is a medicine common in India. Include information about:
+      - Any Jan Aushadhi (government generic) alternatives available in India
+      - Price comparison between branded and generic versions in Indian Rupees (₹)
+      - Dosage information common in Indian medical practice
       
       Return the information as valid JSON with the following structure:
       {
         "genericName": "The generic name of the medicine",
         "activeIngredient": "The active ingredient(s)",
-        "description": "A brief description of what the medicine is and how it works",
+        "description": "A brief description of what the medicine is and how it works in the context of Indian healthcare",
         "sideEffects": ["List", "of", "common", "side", "effects"],
         "interactions": ["List", "of", "common", "drug", "interactions"],
-        "dosage": "Typical dosage information",
-        "usage": "What the medicine is used for (indications)"
+        "dosage": "Typical dosage information used in Indian medical practice",
+        "usage": "What the medicine is used for (indications) with reference to common Indian health conditions"
       }
       
       If you don't know any specific piece of information, use an empty string or empty array as appropriate.
@@ -110,7 +175,10 @@ async function getAIMedicationInfo(
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
-        { role: "system", content: "You are a pharmaceutical information assistant that provides accurate, concise information about medications. Always format your responses in the requested JSON format without any additional text." },
+        { 
+          role: "system", 
+          content: "You are an Indian pharmaceutical information assistant specializing in medications available in the Indian market. You provide accurate, concise information about medications with specific knowledge of Indian brand names, generics, and the Jan Aushadhi program. Always format your responses in the requested JSON format without any additional text." 
+        },
         { role: "user", content: prompt }
       ],
       response_format: { type: "json_object" }
@@ -377,10 +445,27 @@ function formatGeneralInfoResponse(info: MedicationInfo): string {
  * @param {string} message - User message
  * @returns {Object} - Query type and extracted medicine name
  */
+// Import our enhanced detection system
+import { detectQueryTypeWithContext, getMedicineContext } from './chatbot-trainer';
+
 export function detectMedicationQueryType(message: string): { 
   queryType: string; 
   medicineName: string | null;
+  context?: any;
 } {
+  // First try our enhanced detection with Indian medicine knowledge
+  const enhancedDetection = detectQueryTypeWithContext(message);
+  
+  // If we got a medicine name from the enhanced detection, use that result
+  if (enhancedDetection.medicineName) {
+    return {
+      queryType: enhancedDetection.type,
+      medicineName: enhancedDetection.medicineName,
+      context: enhancedDetection.context
+    };
+  }
+  
+  // Fall back to the original pattern matching if enhanced detection didn't work
   const lowerMsg = message.toLowerCase();
   
   // Pattern matching for different query types
@@ -389,28 +474,33 @@ export function detectMedicationQueryType(message: string): {
       type: 'alternatives',
       regex: [
         /(?:alternative|substitute|generic|cheaper)\s+(?:for|to|version of|option for)\s+([a-zA-Z0-9\s]+)/i,
-        /(?:find|get|give me)\s+(?:a|an)?\s*(?:alternative|substitute|generic|cheaper)\s+(?:for|to|version of|option for)\s+([a-zA-Z0-9\s]+)/i
+        /(?:find|get|give me)\s+(?:a|an)?\s*(?:alternative|substitute|generic|cheaper)\s+(?:for|to|version of|option for)\s+([a-zA-Z0-9\s]+)/i,
+        /jan aushadhi.*\s+([a-zA-Z0-9\s]+)/i  // Add pattern for Jan Aushadhi queries
       ]
     },
     {
       type: 'side_effects',
       regex: [
         /(?:side effect|adverse effect|reaction).*\s+([a-zA-Z0-9\s]+)/i,
-        /([a-zA-Z0-9\s]+).*(?:side effect|adverse effect|reaction)/i
+        /([a-zA-Z0-9\s]+).*(?:side effect|adverse effect|reaction)/i,
+        /is\s+([a-zA-Z0-9\s]+)\s+safe\s+(?:during|for|in)/i  // Safety during pregnancy, etc.
       ]
     },
     {
       type: 'interactions',
       regex: [
         /(?:interact|interaction).*\s+([a-zA-Z0-9\s]+)/i,
-        /([a-zA-Z0-9\s]+).*(?:interact|interaction)/i
+        /([a-zA-Z0-9\s]+).*(?:interact|interaction)/i,
+        /can\s+I\s+take\s+([a-zA-Z0-9\s]+)\s+with/i,  // Can I take X with Y
+        /([a-zA-Z0-9\s]+).*(?:with food|empty stomach|before meal|after meal)/i  // Food interactions
       ]
     },
     {
       type: 'dosage',
       regex: [
         /(?:dosage|dose|how to take|how much).*\s+([a-zA-Z0-9\s]+)/i,
-        /([a-zA-Z0-9\s]+).*(?:dosage|dose|how to take|how much)/i
+        /([a-zA-Z0-9\s]+).*(?:dosage|dose|how to take|how much)/i,
+        /how\s+(?:many|often).*\s+([a-zA-Z0-9\s]+)/i  // How many/how often
       ]
     },
     {
@@ -418,14 +508,16 @@ export function detectMedicationQueryType(message: string): {
       regex: [
         /(?:use|used for|treat|indication).*\s+([a-zA-Z0-9\s]+)/i,
         /([a-zA-Z0-9\s]+).*(?:use|used for|treat|indication)/i,
-        /what.*\s+([a-zA-Z0-9\s]+)\s+.*(?:for|treat|do)/i
+        /what.*\s+([a-zA-Z0-9\s]+)\s+.*(?:for|treat|do)/i,
+        /why.*prescribed.*\s+([a-zA-Z0-9\s]+)/i  // Why is X prescribed
       ]
     },
     {
       type: 'general',
       regex: [
         /(?:information|info|about|details).*\s+([a-zA-Z0-9\s]+)/i,
-        /(?:what is|tell me about)\s+([a-zA-Z0-9\s]+)/i
+        /(?:what is|tell me about)\s+([a-zA-Z0-9\s]+)/i,
+        /([a-zA-Z0-9\s]+)\s+(?:tablet|medicine|drug|composition)/i  // X tablet/medicine
       ]
     }
   ];
