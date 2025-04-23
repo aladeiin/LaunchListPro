@@ -443,6 +443,19 @@ export function detectMedicationQueryType(message: string): {
     }
   }
   
+  // Try to detect common Indian medicine brand formats like:
+  // - Brand name followed by dosage: "Telma 40" "Ecosprin 75"
+  // - Common suffix formats: "-stat", "-pril", "-sartan", "-zole", etc.
+  const indianMedicinePattern = /\b((?:[A-Za-z]+(?:-[A-Za-z]+)*)\s*(?:\d+(?:\.\d+)?\s*(?:mg|mcg|ml|g|tablet|tab|cap)?))\b/i;
+  const indianMatch = indianMedicinePattern.exec(message);
+  
+  if (indianMatch && indianMatch[1]) {
+    return {
+      queryType: 'general',
+      medicineName: indianMatch[1].trim()
+    };
+  }
+  
   // Default fallback - try to extract just a medicine name
   const medicineNamePattern = /\b([A-Z][a-zA-Z0-9\s-]{2,})\b/g;
   const match = medicineNamePattern.exec(lowerMsg);
