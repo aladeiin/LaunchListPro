@@ -6,7 +6,9 @@ import {
   type ChatMessage, 
   type InsertChatMessage,
   type BlogArticle,
-  type InsertBlogArticle
+  type InsertBlogArticle,
+  type MerchantApplication,
+  type InsertMerchantApplication
 } from "@shared/schema";
 
 export interface IStorage {
@@ -49,20 +51,24 @@ export class MemStorage implements IStorage {
   private medicines: Map<number, Medicine>;
   private chatMessages: Map<number, ChatMessage>;
   private blogArticles: Map<number, BlogArticle>;
+  private merchantApplications: Map<number, MerchantApplication>;
   private waitlistUserCurrentId: number;
   private medicineCurrentId: number;
   private chatMessageCurrentId: number;
   private blogArticleCurrentId: number;
+  private merchantApplicationCurrentId: number;
 
   constructor() {
     this.waitlistUsers = new Map();
     this.medicines = new Map();
     this.chatMessages = new Map();
     this.blogArticles = new Map();
+    this.merchantApplications = new Map();
     this.waitlistUserCurrentId = 1;
     this.medicineCurrentId = 1;
     this.chatMessageCurrentId = 1;
     this.blogArticleCurrentId = 1;
+    this.merchantApplicationCurrentId = 1;
 
     // Initialize with some sample medicine data
     this.initMedicineData();
@@ -1361,6 +1367,53 @@ The event closed with the announcement of a nationwide Jan Aushadhi awareness we
         stockCount: medicine.stockCount !== undefined ? medicine.stockCount : Math.floor(Math.random() * 100) + 1
       });
     }
+  }
+
+  // Merchant application methods
+  async createMerchantApplication(application: any): Promise<MerchantApplication> {
+    const id = this.merchantApplicationCurrentId++;
+    const createdAt = new Date();
+    
+    // Create a complete merchant application object
+    const merchantApplication: MerchantApplication = {
+      ...application,
+      id,
+      createdAt,
+      status: application.status || 'pending',
+    };
+    
+    this.merchantApplications.set(id, merchantApplication);
+    console.log(`Created merchant application for: ${application.businessName} (ID: ${id})`);
+    return merchantApplication;
+  }
+  
+  async getMerchantApplications(): Promise<MerchantApplication[]> {
+    return Array.from(this.merchantApplications.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async getMerchantApplicationById(id: number): Promise<MerchantApplication | undefined> {
+    return this.merchantApplications.get(id);
+  }
+  
+  async updateMerchantApplicationStatus(id: number, status: string): Promise<MerchantApplication | undefined> {
+    const application = this.merchantApplications.get(id);
+    
+    if (!application) {
+      console.log(`Merchant application with ID ${id} not found for update`);
+      return undefined;
+    }
+    
+    // Update the status and add updatedAt timestamp
+    const updatedApplication: MerchantApplication = {
+      ...application,
+      status,
+      updatedAt: new Date()
+    };
+    
+    this.merchantApplications.set(id, updatedApplication);
+    console.log(`Updated merchant application status: ${updatedApplication.businessName} (ID: ${id}) to ${status}`);
+    return updatedApplication;
   }
 }
 

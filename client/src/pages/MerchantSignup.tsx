@@ -35,8 +35,8 @@ const formSchema = z.object({
   gstNumber: z.string().optional(),
   drugLicenseNumber: z.string().min(3, "License number is required"),
   // Terms agreement
-  termsAgreed: z.literal(true, {
-    errorMap: () => ({ message: "You must agree to the terms and conditions" }),
+  termsAgreed: z.boolean().refine(val => val === true, {
+    message: "You must agree to the terms and conditions",
   }),
   description: z.string().optional(),
 });

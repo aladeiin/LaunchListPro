@@ -11,6 +11,7 @@ import { mlSubstitutionRouter } from "./routes/ml-substitution";
 import { symptomWizardRouter } from "./routes/symptom-wizard";
 import blogRouter from "./routes/blog";
 import { alternativesRouter } from "./routes/alternatives";
+import { merchantsRouter } from "./routes/merchants";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create API router
