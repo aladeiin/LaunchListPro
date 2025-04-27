@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, doublePrecision, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -89,3 +89,40 @@ export type ChatMessage = typeof chatMessages.$inferSelect;
 
 export type InsertBlogArticle = z.infer<typeof insertBlogArticleSchema>;
 export type BlogArticle = typeof blogArticles.$inferSelect;
+
+// Merchant applications schema
+export const merchantApplications = pgTable("merchant_applications", {
+  id: serial("id").primaryKey(),
+  businessName: text("business_name").notNull(),
+  ownerName: text("owner_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  address: text("address").notNull(),
+  businessType: text("business_type").notNull(),
+  // Bank details
+  accountHolderName: text("account_holder_name").notNull(),
+  accountNumber: text("account_number").notNull(),
+  ifscCode: text("ifsc_code").notNull(),
+  bankName: text("bank_name").notNull(),
+  bankBranch: text("bank_branch").notNull(),
+  // Business details
+  productCategories: text("product_categories").array().notNull(),
+  gstNumber: text("gst_number"),
+  drugLicenseNumber: text("drug_license_number").notNull(),
+  // File uploads (stored as paths)
+  fileUploads: jsonb("file_uploads").notNull().default({}),
+  // Additional info
+  description: text("description"),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
+export const insertMerchantApplicationSchema = createInsertSchema(merchantApplications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type InsertMerchantApplication = z.infer<typeof insertMerchantApplicationSchema>;
+export type MerchantApplication = typeof merchantApplications.$inferSelect;

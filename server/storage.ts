@@ -36,6 +36,12 @@ export interface IStorage {
   getBlogArticlesByTopic(topic: string): Promise<BlogArticle[]>;
   searchBlogArticles(query: string): Promise<BlogArticle[]>;
   createBlogArticle(article: InsertBlogArticle): Promise<BlogArticle>;
+  
+  // Merchant applications
+  createMerchantApplication(application: any): Promise<MerchantApplication>;
+  getMerchantApplications(): Promise<MerchantApplication[]>;
+  getMerchantApplicationById(id: number): Promise<MerchantApplication | undefined>;
+  updateMerchantApplicationStatus(id: number, status: string): Promise<MerchantApplication | undefined>;
 }
 
 export class MemStorage implements IStorage {
