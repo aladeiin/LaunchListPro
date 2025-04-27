@@ -8,6 +8,7 @@ import FAQSection from "@/components/FAQSection";
 import DemoSection from "@/components/DemoSection";
 import WaitlistSection from "@/components/WaitlistSection";
 import CTASection from "@/components/CTASection";
+import PharmacyPartnersSection from "@/components/PharmacyPartnersSection";
 import ChatInterface from "@/components/ChatInterface";
 
 export default function Home() {
@@ -24,6 +25,7 @@ export default function Home() {
         <FeaturesSection />
         <HowItWorksSection />
         <DemoSection />
+        <PharmacyPartnersSection />
         <TestimonialsSection />
         <FAQSection />
         <WaitlistSection />

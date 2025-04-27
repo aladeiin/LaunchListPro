@@ -8,6 +8,10 @@ export default function CTASection() {
     document.getElementById('join-waitlist')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const goToMerchantSignup = () => {
+    setLocation('/merchant-signup');
+  };
+
   return (
     <section className="py-16 bg-gradient-to-r from-primary/10 to-cyan-500/10">
       <div className="container mx-auto px-4 text-center">
@@ -15,13 +19,24 @@ export default function CTASection() {
         <p className="text-xl text-slate-700 max-w-3xl mx-auto mb-8">
           Join thousands of others who are taking control of their medication costs
         </p>
-        <Button 
-          size="lg" 
-          className="px-8 py-6 text-lg"
-          onClick={scrollToWaitlist}
-        >
-          Join the Waitlist Now
-        </Button>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Button 
+            size="lg" 
+            className="px-8 py-6 text-lg"
+            onClick={scrollToWaitlist}
+          >
+            Join the Waitlist Now
+          </Button>
+          
+          <Button 
+            size="lg"
+            variant="outline"
+            className="px-8 py-6 text-lg"
+            onClick={goToMerchantSignup}
+          >
+            Register as a Seller
+          </Button>
+        </div>
         <p className="mt-6 text-slate-600">
           We're launching soon. Be the first to know!
         </p>
