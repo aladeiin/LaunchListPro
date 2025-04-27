@@ -137,12 +137,24 @@ export default function MerchantSignup() {
         }
       });
 
-      // For this example, we're just simulating the API call
-      console.log("Form data would be sent:", data);
-      console.log("Files would be sent:", uploadedFiles);
-      
-      // Simulate API call with delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Make the actual API call to submit the form data
+      try {
+        const response = await fetch('/api/merchants', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to submit application');
+        }
+        
+        const result = await response.json();
+        console.log("Merchant application submitted successfully:", result);
+      } catch (submitError) {
+        console.error("Error submitting form:", submitError);
+        throw submitError;
+      }
       
       // Simulate success
       setSubmitSuccess(true);

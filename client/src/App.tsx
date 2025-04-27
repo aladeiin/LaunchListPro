@@ -17,6 +17,7 @@ import BlogDetail from "@/pages/BlogDetail";
 import BlogSearch from "@/pages/BlogSearch";
 import BlogTopic from "@/pages/BlogTopic";
 import DoctorConsultation from "@/pages/DoctorConsultation";
+import MerchantSignup from "@/pages/MerchantSignup";
 import { ThemeProvider } from "./lib/theme-context";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/generic/:id" component={GenericDetail} />
       <Route path="/medicine/:name" component={MedicineDetail} />
       <Route path="/doctor-consultation" component={DoctorConsultation} />
+      <Route path="/merchant-signup" component={MerchantSignup} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/search" component={BlogSearch} />
       <Route path="/blog/topic/:topic" component={BlogTopic} />
