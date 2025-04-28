@@ -35,8 +35,8 @@ export async function getComprehensiveMedicationInfo(medicineName: string): Prom
   try {
     console.log(`[MEDICATION-API] Looking up information for: ${medicineName}`);
     
-    // Check our enhanced Indian medicine context first
-    const indianContext = getMedicineContext(medicineName);
+    // Check our enhanced Indian medicine context first (now async)
+    const indianContext = await getMedicineContext(medicineName);
     console.log(`[MEDICATION-API] Indian medicine context:`, indianContext?.isKnownMedicine ? "Found" : "Not found");
     
     // Parse price from Indian context if available
@@ -54,13 +54,13 @@ export async function getComprehensiveMedicationInfo(medicineName: string): Prom
     
     // If we have context but no database entry, try to look up by generic name
     let alternativeMedicine = null;
-    if (!medicine && indianContext?.isKnownMedicine && indianContext.alternativeBrand) {
+    if (!medicine && indianContext && indianContext.isKnownMedicine && indianContext.alternativeBrand) {
       alternativeMedicine = await storage.getMedicineByName(indianContext.alternativeBrand);
     }
     
     // Determine best active ingredient from all available sources
     const activeIngredient = medicine?.activeIngredient || 
-                            (indianContext?.isKnownMedicine ? indianContext.genericName : '') ||
+                            (indianContext && indianContext.isKnownMedicine ? indianContext.genericName : '') ||
                             alternativeMedicine?.activeIngredient || '';
     
     // Find alternatives with the same active ingredient
@@ -83,7 +83,7 @@ export async function getComprehensiveMedicationInfo(medicineName: string): Prom
       
       // If we don't have alternatives from database but have context data,
       // add the alternative from our Indian context
-      if (alternatives.length === 0 && indianContext?.isKnownMedicine && indianContext.alternativeBrand) {
+      if (alternatives.length === 0 && indianContext && indianContext.isKnownMedicine && indianContext.alternativeBrand) {
         console.log(`[MEDICATION-API] Adding alternative from Indian context: ${indianContext.alternativeBrand}`);
         
         const altPrice = contextPrice * 0.7; // Assume generic is about 30% cheaper
@@ -100,9 +100,7 @@ export async function getComprehensiveMedicationInfo(medicineName: string): Prom
           dosage: "",
           imageUrl: "",
           availableAt: ["Jan Aushadhi Stores"],
-          stockCount: 10,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          stockCount: 10
         });
       }
     }
@@ -111,20 +109,30 @@ export async function getComprehensiveMedicationInfo(medicineName: string): Prom
     const aiGeneratedInfo = await getAIMedicationInfo(
       medicine?.name || medicineName,
       activeIngredient,
-      medicine?.genericName || (indianContext?.isKnownMedicine ? indianContext.genericName : '')
+      medicine?.genericName || (indianContext && indianContext.isKnownMedicine ? indianContext.genericName : '')
     );
+    
+    // Include enhanced salt information from 1mg if available
+    let enhancedActiveIngredient = activeIngredient;
+    if (indianContext && indianContext.from1mg && indianContext.saltInfo) {
+      enhancedActiveIngredient = indianContext.saltInfo;
+    }
     
     return {
       name: medicine?.name || medicineName,
       genericName: medicine?.genericName || 
-                  (indianContext?.isKnownMedicine ? indianContext.genericName : '') || 
+                  (indianContext && indianContext.isKnownMedicine ? indianContext.genericName : '') || 
                   aiGeneratedInfo.genericName || '',
-      activeIngredient: activeIngredient || aiGeneratedInfo.activeIngredient || '',
+      activeIngredient: enhancedActiveIngredient || aiGeneratedInfo.activeIngredient || '',
       alternatives: alternatives,
-      description: medicine?.description || aiGeneratedInfo.description || '',
+      description: medicine?.description || 
+                  (indianContext && indianContext.from1mg ? indianContext.description : '') ||
+                  aiGeneratedInfo.description || '',
       sideEffects: aiGeneratedInfo.sideEffects || [],
       interactions: aiGeneratedInfo.interactions || [],
-      dosage: medicine?.dosage || aiGeneratedInfo.dosage || '',
+      dosage: medicine?.dosage || 
+              (indianContext && indianContext.from1mg ? indianContext.dosage : '') ||
+              aiGeneratedInfo.dosage || '',
       usage: aiGeneratedInfo.usage || '',
       price: medicine?.price || contextPrice || 0
     };
@@ -448,13 +456,13 @@ function formatGeneralInfoResponse(info: MedicationInfo): string {
 // Import our enhanced detection system
 import { detectQueryTypeWithContext, getMedicineContext } from './chatbot-trainer';
 
-export function detectMedicationQueryType(message: string): { 
+export async function detectMedicationQueryType(message: string): Promise<{ 
   queryType: string; 
   medicineName: string | null;
   context?: any;
-} {
+}> {
   // First try our enhanced detection with Indian medicine knowledge
-  const enhancedDetection = detectQueryTypeWithContext(message);
+  const enhancedDetection = await detectQueryTypeWithContext(message);
   
   // If we got a medicine name from the enhanced detection, use that result
   if (enhancedDetection.medicineName) {

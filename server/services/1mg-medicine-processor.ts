@@ -8,8 +8,11 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import glob from 'glob';
+import * as globModule from 'glob';
 import OpenAI from 'openai';
+
+// Use the glob function from the module
+const { glob } = globModule;
 
 // ESM module workaround for __dirname
 const __filename = fileURLToPath(import.meta.url);

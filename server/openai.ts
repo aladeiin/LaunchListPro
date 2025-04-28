@@ -131,7 +131,7 @@ export async function getChatResponse(userMessage: string): Promise<string> {
   console.log("[OPENAI-CHAT] Sanitized message length:", sanitizedMessage.length);
   
   // First, check if this is a medication-related query
-  const medicationQuery = detectMedicationQueryType(sanitizedMessage);
+  const medicationQuery = await detectMedicationQueryType(sanitizedMessage);
   
   // If we detected a medication query and extracted a medication name
   if (medicationQuery.queryType !== 'unknown' && medicationQuery.medicineName) {
@@ -140,6 +140,26 @@ export async function getChatResponse(userMessage: string): Promise<string> {
       
       // Get comprehensive medication info
       const medicationInfo = await getComprehensiveMedicationInfo(medicationQuery.medicineName);
+      
+      // Enhance medication info with 1mg salt and dosage data if available
+      if (medicationQuery.context && medicationQuery.context.from1mg) {
+        console.log(`[MEDICATION-API] Using enhanced 1mg data for ${medicationQuery.medicineName}`);
+        
+        // Add salt info to the medication info if available
+        if (medicationQuery.context.saltInfo) {
+          medicationInfo.activeIngredient = medicationQuery.context.saltInfo;
+        }
+        
+        // Add dosage info to the medication info if available
+        if (medicationQuery.context.dosage) {
+          medicationInfo.dosage = medicationQuery.context.dosage;
+        }
+        
+        // Add description if available
+        if (medicationQuery.context.description) {
+          medicationInfo.description = medicationQuery.context.description;
+        }
+      }
       
       // Format the response based on query type
       const response = formatMedicationResponse(medicationInfo, medicationQuery.queryType);

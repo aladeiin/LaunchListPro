@@ -110,12 +110,48 @@ export function generateTrainingExamples() {
  * @param medicineName Name of the medicine to look up
  * @returns Context information if available
  */
-export function getMedicineContext(medicineName: string) {
+export async function getMedicineContext(medicineName: string) {
   if (!medicineName) return null;
   
   const lowerName = medicineName.toLowerCase();
   
-  // Look up in our Indian medicines dataset
+  try {
+    // First try to get information from our 1mg processor
+    const { getMedicineInfo } = await import('../services/1mg-medicine-processor');
+    const medicineInfo = await getMedicineInfo(medicineName);
+    
+    if (medicineInfo) {
+      // We have detailed information from 1mg
+      console.log(`[CHATBOT-TRAINER] Found medicine info for ${medicineName} in 1mg data`);
+      
+      // Extract active ingredients as a string
+      const saltInfo = medicineInfo.activeIngredients.map(ing => 
+        `${ing.name}${ing.dosage ? ` ${ing.dosage}${ing.unit}` : ''}`
+      ).join(', ');
+      
+      // Find alternatives
+      const alternatives = medicineInfo.similarBrands?.slice(0, 3) || [];
+      
+      return {
+        brandName: medicineInfo.brandName,
+        genericName: medicineInfo.genericName,
+        alternativeBrand: alternatives.length > 0 ? alternatives[0] : '',
+        priceRange: `₹${medicineInfo.price}`,
+        isKnownMedicine: true,
+        saltInfo,
+        description: medicineInfo.description,
+        manufacturer: medicineInfo.manufacturer,
+        isGeneric: medicineInfo.isGeneric,
+        dosage: medicineInfo.activeIngredients.map(ing => `${ing.dosage}${ing.unit}`).join(', '),
+        from1mg: true,
+        alternatives
+      };
+    }
+  } catch (error) {
+    console.error('[CHATBOT-TRAINER] Error getting medicine context from 1mg:', error);
+  }
+  
+  // Fallback to our legacy dataset
   for (const [brandName, genericName, alternativeBrand, priceRange] of indianMedicinePairs) {
     if (lowerName.includes(brandName.toLowerCase())) {
       return {
@@ -123,14 +159,16 @@ export function getMedicineContext(medicineName: string) {
         genericName, 
         alternativeBrand,
         priceRange,
-        isKnownMedicine: true
+        isKnownMedicine: true,
+        from1mg: false
       };
     }
   }
   
   return {
     brandName: medicineName,
-    isKnownMedicine: false
+    isKnownMedicine: false,
+    from1mg: false
   };
 }
 
@@ -139,11 +177,11 @@ export function getMedicineContext(medicineName: string) {
  * @param query User query
  * @returns Query type classification 
  */
-export function detectQueryTypeWithContext(query: string): { 
+export async function detectQueryTypeWithContext(query: string): Promise<{ 
   type: 'alternative' | 'side_effect' | 'dosage' | 'usage' | 'interaction' | 'general' | 'unknown';
   medicineName: string | null;
   context: any;
-} {
+}> {
   // Detect the medicine first
   const medicineInfo = enhancedMedicineDetection(query);
   const medicineName = medicineInfo.medicineName;
@@ -156,8 +194,8 @@ export function detectQueryTypeWithContext(query: string): {
     };
   }
   
-  // Get additional context for this medicine
-  const context = getMedicineContext(medicineName);
+  // Get additional context for this medicine (now async)
+  const context = await getMedicineContext(medicineName);
   
   // Determine query type
   const lowerQuery = query.toLowerCase();
