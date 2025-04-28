@@ -199,7 +199,15 @@ export async function loadAllMedicineData(): Promise<MedicineDataset> {
     
     if (jsonFiles.length === 0) {
       // Fallback to the file we found earlier
-      jsonFiles.push(path.join(dataDir, 'test_medications_p.json'));
+      const fallbackPath = path.join(dataDir, 'test_medications_p.json');
+      console.log(`[1MG-PROCESSOR] No medication JSON files found with glob, checking if fallback exists: ${fallbackPath}`);
+      
+      if (fs.existsSync(fallbackPath)) {
+        jsonFiles.push(fallbackPath);
+        console.log(`[1MG-PROCESSOR] Added fallback file: ${fallbackPath}`);
+      } else {
+        console.log(`[1MG-PROCESSOR] Fallback file not found at: ${fallbackPath}`);
+      }
     }
     
     let totalMedications = 0;
@@ -309,8 +317,10 @@ export async function getMedicineInfo(medicineName: string): Promise<ProcessedMe
     const possibleMatches: [string, number][] = [];
     for (const name of Object.keys(medicineCache)) {
       const similarity = calculateSimilarity(name, key);
-      if (similarity > 0.8) {
+      // Use a lower threshold (0.6) to improve matching chances
+      if (similarity > 0.6) {
         possibleMatches.push([name, similarity]);
+        console.log(`[1MG-PROCESSOR] Possible match for "${medicineName}": "${name}" (similarity: ${similarity.toFixed(2)})`);
       }
     }
     
