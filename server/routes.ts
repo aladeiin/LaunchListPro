@@ -62,6 +62,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Mount merchants router
   apiRouter.use("/merchants", merchantsRouter);
+  
+  // Mount external data router
+  apiRouter.use("/external-data", externalDataRouter);
 
   // Get medication info via OpenAI
   apiRouter.get("/medication-info/:name", async (req: Request, res: Response) => {
