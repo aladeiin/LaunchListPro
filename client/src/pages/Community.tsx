@@ -24,7 +24,8 @@ import {
   Award,
   Building,
   CalendarCheck,
-  Sparkles
+  Sparkles,
+  ChevronRight
 } from "lucide-react";
 
 export default function CommunityPage() {

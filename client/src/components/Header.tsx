@@ -1,9 +1,10 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Menu, Moon, Sun, X } from "lucide-react";
+import { Menu, Moon, Sun, X, Globe, AlertTriangle, Users } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import Logo from "@/components/Logo";
+import LanguageSelector from "@/components/LanguageSelector";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -44,8 +45,13 @@ export default function Header() {
           <Link href="/generics" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
             Generics
           </Link>
-          <Link href="/dashboard" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
-            Dashboard
+          <Link href="/community" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0 flex items-center">
+            <Users className="h-3.5 w-3.5 mr-1" />
+            Community
+          </Link>
+          <Link href="/adverse-event-reporting" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0 flex items-center">
+            <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+            Report Issue
           </Link>
           <Link href="/doctor-consultation" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
             Doctor Consultation
@@ -56,15 +62,11 @@ export default function Header() {
           <Link href="/merchant-signup" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
             For Sellers
           </Link>
-          <Link href="/#how-it-works" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
-            How It Works
-          </Link>
-          <Link href="/#features" className="text-neutral-700 dark:text-neutral-200 hover:text-primary dark:hover:text-primary transition py-2 md:py-0">
-            Features
-          </Link>
         </nav>
         
         <div className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex items-center space-x-4 mt-4 md:mt-0`}>
+          <LanguageSelector variant="compact" />
+          
           <Button
             variant="ghost"
             size="icon"
@@ -74,6 +76,7 @@ export default function Header() {
           >
             {theme === 'dark' ? <Sun size={20} className="text-yellow-300" /> : <Moon size={20} className="text-slate-700" />}
           </Button>
+          
           <Button 
             onClick={() => document.getElementById('join-waitlist')?.scrollIntoView({ behavior: 'smooth' })}
             className="w-full md:w-auto"
