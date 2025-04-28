@@ -127,7 +127,7 @@ const MedicineAlternatives: React.FC<MedicineAlternativesProps> = ({
             <CardDescription>
               {hasMultipleDataSources ? (
                 <>Found alternatives from multiple sources</>
-              ) : hasInternalData ? (
+              ) : hasInternalData && internalMedicine ? (
                 <>Found {internalCount} alternatives with the same active ingredient: {" "}
                   <span className="font-medium">{internalMedicine.activeIngredient}</span>
                 </>

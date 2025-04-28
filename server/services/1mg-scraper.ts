@@ -66,67 +66,32 @@ export async function getMedicineDetails(name: string): Promise<Medicine | null>
   try {
     console.log(`Getting details for medicine: ${name}`);
     
-    // In a real implementation, we would:
-    // 1. Search for the medicine on 1mg
-    // 2. Navigate to the medicine's detail page
-    // 3. Scrape the detailed information
-    // 4. Convert it to our Medicine type
-    // 5. Return the result
+    // Import here to avoid circular dependencies
+    const { getMedicationDetailFrom1mg } = await import('./1mg-integration');
     
-    // For demonstration, we'll return a generic structure
-    const sanitizedName = name.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+    // Try to get data from 1mg
+    const medicationInfo = await getMedicationDetailFrom1mg(name);
     
-    // Create a hash code from the name for consistent "random" values
-    const hashCode = sanitizedName.split('').reduce(
-      (hash, char) => (hash * 31 + char.charCodeAt(0)) & 0xffffffff, 0
-    );
+    if (!medicationInfo) {
+      console.log(`No details found for medicine: ${name} in external source`);
+      return null;
+    }
     
-    // Generate a price between 50 and 1000 based on the hash
-    const price = 50 + (hashCode % 951);
-    
-    // Determine if it's a generic medicine based on the hash
-    const isGeneric = (hashCode % 2) === 0;
-    
-    // Select a manufacturer from a list based on the hash
-    const manufacturers = [
-      'Sun Pharmaceutical Industries Ltd',
-      'Cipla Ltd',
-      'Dr. Reddy\'s Laboratories Ltd',
-      'Lupin Ltd',
-      'Mankind Pharma Ltd',
-      'Alkem Laboratories Ltd',
-      'Torrent Pharmaceuticals Ltd',
-      'Zydus Cadila',
-      'Ipca Laboratories Ltd',
-      'Intas Pharmaceuticals Ltd'
-    ];
-    const manufacturer = manufacturers[hashCode % manufacturers.length];
-    
-    // Generate a description
-    const description = `${name} is used to treat various conditions. It contains active ingredients that help address specific health issues. Always consult a healthcare professional before use.`;
-    
-    // Generate active ingredient based on the name
-    const activeIngredient = sanitizedName.split(' ')[0] + 'mide';
-    
-    // Generate stock information
-    const inStock = Math.random() > 0.2; // 80% chance of being in stock
-    const stockCount = inStock ? Math.floor(Math.random() * 100) + 1 : 0;
-    
-    // Create medicine object with stock info
+    // Convert the 1mg data format to our Medicine type
     const medicine: Medicine = {
-      id: hashCode,
-      name: name,
-      genericName: isGeneric ? activeIngredient : name,
-      manufacturer: manufacturer,
-      price: price,
-      isGeneric: isGeneric,
-      description: description,
-      dosage: 'As directed by physician',
-      activeIngredient: activeIngredient,
-      imageUrl: `https://onemg.gumlet.io/a_ignore,w_380,h_380,c_fit,q_auto,f_auto/c2a0598f-a7c8-48ec-9bf9-47ac3d73b153.jpg`,
-      availableAt: ['Apollo Pharmacy', 'MedPlus', 'NetMeds'],
-      inStock: inStock,
-      stockCount: stockCount
+      id: Date.now(), // Generate a temporary ID
+      name: medicationInfo.name,
+      genericName: medicationInfo.genericName || name,
+      manufacturer: medicationInfo.manufacturer || 'Unknown',
+      price: medicationInfo.price || 0,
+      isGeneric: medicationInfo.isGeneric || false,
+      description: medicationInfo.description || `${name} is a medication.`,
+      dosage: medicationInfo.dosage || 'As directed by physician',
+      activeIngredient: medicationInfo.activeIngredient || '',
+      imageUrl: medicationInfo.imageUrl || '',
+      availableAt: ['Online Pharmacy'],
+      inStock: medicationInfo.inStock || false,
+      stockCount: medicationInfo.stockCount || 0
     };
     
     return medicine;
@@ -145,14 +110,33 @@ export async function findAlternatives(medicineName: string): Promise<Medicine[]
   try {
     console.log(`Finding alternatives for medicine: ${medicineName}`);
     
-    // In a real implementation, we would:
-    // 1. Get the medicine details to find its active ingredient
-    // 2. Search for other medicines with the same active ingredient
-    // 3. Filter out the original medicine
-    // 4. Return the alternatives
+    // Import here to avoid circular dependencies
+    const { findAlternativesFrom1mg } = await import('./1mg-integration');
     
-    // For demonstration, we'll return an empty array
-    return [];
+    // Try to get alternatives from 1mg
+    const alternatives = await findAlternativesFrom1mg(medicineName);
+    
+    if (!alternatives || alternatives.length === 0) {
+      console.log(`No alternatives found for medicine: ${medicineName} in external source`);
+      return [];
+    }
+    
+    // Convert the 1mg data format to our Medicine type
+    return alternatives.map(alt => ({
+      id: Date.now() + Math.floor(Math.random() * 1000), // Generate a temporary ID
+      name: alt.name,
+      genericName: alt.genericName || alt.name,
+      manufacturer: alt.manufacturer || 'Unknown',
+      price: alt.price || 0,
+      isGeneric: alt.isGeneric || false,
+      description: alt.description || `${alt.name} is a medication.`,
+      dosage: alt.dosage || 'As directed by physician',
+      activeIngredient: alt.activeIngredient || '',
+      imageUrl: alt.imageUrl || '',
+      availableAt: ['Online Pharmacy'],
+      inStock: alt.inStock || false,
+      stockCount: alt.stockCount || 0
+    }));
   } catch (error) {
     console.error(`Error finding alternatives for medicine ${medicineName}:`, error);
     return [];
