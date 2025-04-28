@@ -51,7 +51,7 @@ async function importMedicationsFromFile(filePath: string): Promise<number> {
             manufacturer: medication.manufacturer,
             dosage: medication.dosage,
             activeIngredient: medication.activeIngredient,
-            availability: medication.inStock
+            inStock: medication.inStock
           });
           console.log(`Updated existing medicine: ${medication.name}`);
           importedCount++;
@@ -60,11 +60,13 @@ async function importMedicationsFromFile(filePath: string): Promise<number> {
           const insertMedicine: InsertMedicine = {
             name: medication.name,
             genericName: medication.genericName,
-            price: medication.price,
+            description: medication.composition || `${medication.name} contains ${medication.genericName}`,
             manufacturer: medication.manufacturer,
+            isGeneric: medication.type === 'generic',
+            price: medication.price,
             dosage: medication.dosage,
             activeIngredient: medication.activeIngredient,
-            availability: medication.inStock
+            inStock: medication.inStock
           };
           
           await storage.createMedicine(insertMedicine);
