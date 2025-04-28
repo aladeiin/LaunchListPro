@@ -60,6 +60,66 @@ interface ExternalMedicinesResponse {
   medications: ExternalMedicine[];
 }
 
+// Component to display an external medicine card
+const ExternalMedicineCard = ({ medicine, source }: { medicine: ExternalMedicine, source: string }) => {
+  return (
+    <Card className="overflow-hidden h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start gap-2">
+          <div>
+            <CardTitle className="text-lg line-clamp-2">{medicine.name}</CardTitle>
+            <CardDescription className="line-clamp-1">
+              {medicine.genericName || "Generic name not available"}
+            </CardDescription>
+          </div>
+          {medicine.isGeneric ? (
+            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Generic</Badge>
+          ) : (
+            <Badge variant="outline">Branded</Badge>
+          )}
+        </div>
+      </CardHeader>
+      
+      <CardContent className="pb-2 flex-grow">
+        <div className="space-y-2">
+          <div className="text-sm">
+            <span className="font-medium">Manufacturer: </span>
+            <span className="text-gray-600">{medicine.manufacturer || "Unknown"}</span>
+          </div>
+          
+          {medicine.activeIngredient && (
+            <div className="text-sm">
+              <span className="font-medium">Active Ingredient: </span>
+              <span className="text-gray-600">{medicine.activeIngredient}</span>
+            </div>
+          )}
+          
+          {medicine.dosage && (
+            <div className="text-sm">
+              <span className="font-medium">Dosage: </span>
+              <span className="text-gray-600">{medicine.dosage}</span>
+            </div>
+          )}
+        </div>
+      </CardContent>
+      
+      <CardFooter className="flex justify-between items-center pt-2 border-t">
+        <div className="text-lg font-semibold">
+          {medicine.price !== undefined 
+            ? `₹${medicine.price.toFixed(2)}` 
+            : <span className="text-gray-500">Price N/A</span>
+          }
+        </div>
+        
+        <div className="flex items-center text-xs text-gray-500">
+          <ExternalLink className="h-3 w-3 mr-1" />
+          <span>Data from {source}</span>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+};
+
 export default function Products() {
   // State for filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -523,63 +583,3 @@ export default function Products() {
     </div>
   );
 }
-
-// Component to display an external medicine card
-const ExternalMedicineCard = ({ medicine, source }: { medicine: ExternalMedicine, source: string }) => {
-  return (
-    <Card className="overflow-hidden h-full flex flex-col">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start gap-2">
-          <div>
-            <CardTitle className="text-lg line-clamp-2">{medicine.name}</CardTitle>
-            <CardDescription className="line-clamp-1">
-              {medicine.genericName || "Generic name not available"}
-            </CardDescription>
-          </div>
-          {medicine.isGeneric ? (
-            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Generic</Badge>
-          ) : (
-            <Badge variant="outline">Branded</Badge>
-          )}
-        </div>
-      </CardHeader>
-      
-      <CardContent className="pb-2 flex-grow">
-        <div className="space-y-2">
-          <div className="text-sm">
-            <span className="font-medium">Manufacturer: </span>
-            <span className="text-gray-600">{medicine.manufacturer || "Unknown"}</span>
-          </div>
-          
-          {medicine.activeIngredient && (
-            <div className="text-sm">
-              <span className="font-medium">Active Ingredient: </span>
-              <span className="text-gray-600">{medicine.activeIngredient}</span>
-            </div>
-          )}
-          
-          {medicine.dosage && (
-            <div className="text-sm">
-              <span className="font-medium">Dosage: </span>
-              <span className="text-gray-600">{medicine.dosage}</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-      
-      <CardFooter className="flex justify-between items-center pt-2 border-t">
-        <div className="text-lg font-semibold">
-          {medicine.price !== undefined 
-            ? `₹${medicine.price.toFixed(2)}` 
-            : <span className="text-gray-500">Price N/A</span>
-          }
-        </div>
-        
-        <div className="flex items-center text-xs text-gray-500">
-          <ExternalLink className="h-3 w-3 mr-1" />
-          <span>Data from {source}</span>
-        </div>
-      </CardFooter>
-    </Card>
-  );
-};

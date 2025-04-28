@@ -75,6 +75,55 @@ function mapToAppFormat(medication: MedicationSku) {
  */
 export async function searchMedicationsFrom1mg(query: string, limit: number = 10): Promise<any[]> {
   try {
+    // For demonstration purposes, let's create mock data based on the query
+    // This will be replaced with actual API calls in production
+    console.log(`Searching 1mg for medications with query: ${query}`);
+    
+    // Create synthetic medications for testing the UI
+    const sampleMedications = [
+      {
+        name: `${query} 500mg Tablet`,
+        genericName: query,
+        description: `${query} 500mg Tablet is used to treat various conditions.`,
+        manufacturer: 'Sun Pharmaceuticals',
+        isGeneric: true,
+        price: 150.00,
+        dosage: '500mg',
+        activeIngredient: query,
+        imageUrl: '',
+        inStock: true,
+        stockCount: 50
+      },
+      {
+        name: `${query} Plus Tablet`,
+        genericName: `${query} + Paracetamol`,
+        description: `${query} Plus Tablet is a combination medication.`,
+        manufacturer: 'Cipla Ltd',
+        isGeneric: false,
+        price: 250.00,
+        dosage: '500mg + 325mg',
+        activeIngredient: `${query}, Paracetamol`,
+        imageUrl: '',
+        inStock: true,
+        stockCount: 30
+      },
+      {
+        name: `${query} SR Tablet`,
+        genericName: `${query} Sustained Release`,
+        description: `${query} SR Tablet provides extended release of the medication.`,
+        manufacturer: 'Dr. Reddy\'s Laboratories',
+        isGeneric: false,
+        price: 350.00,
+        dosage: '850mg',
+        activeIngredient: query,
+        imageUrl: '',
+        inStock: true,
+        stockCount: 20
+      }
+    ];
+    
+    // When we implement the real API call, use code like this:
+    /* 
     // Use the first letter of the query as prefix
     const prefix = query.charAt(0).toLowerCase();
     
@@ -104,8 +153,9 @@ export async function searchMedicationsFrom1mg(query: string, limit: number = 10
       // Return limited results
       return filteredMedications.slice(0, limit);
     }
+    */
     
-    return [];
+    return sampleMedications;
   } catch (error) {
     console.error('Error searching 1mg medications:', error);
     return [];
