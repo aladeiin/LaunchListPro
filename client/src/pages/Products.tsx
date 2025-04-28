@@ -24,7 +24,8 @@ import {
   SlidersHorizontal,
   Pill,
   RefreshCcw,
-  AlertCircle
+  AlertCircle,
+  ExternalLink
 } from 'lucide-react';
 import ErrorState from '@/components/ErrorState';
 
@@ -40,6 +41,25 @@ interface MedicinesResponse {
   };
 }
 
+interface ExternalMedicine {
+  name: string;
+  genericName?: string;
+  manufacturer?: string;
+  price?: number;
+  dosage?: string;
+  activeIngredient?: string;
+  imageUrl?: string;
+  isGeneric?: boolean;
+  inStock?: boolean;
+  stockCount?: number;
+}
+
+interface ExternalMedicinesResponse {
+  source: string;
+  query: string;
+  medications: ExternalMedicine[];
+}
+
 export default function Products() {
   // State for filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +68,8 @@ export default function Products() {
   const [sortOption, setSortOption] = useState('name-asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [externalSearchQuery, setExternalSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   // Fetch medicines
   const { data: medicinesData, isLoading, error, refetch } = useQuery<MedicinesResponse>({
@@ -66,6 +88,35 @@ export default function Products() {
       console.log('Medicines data:', data);
       return data;
     }
+  });
+  
+  // Fetch external medicines data from 1mg
+  const { 
+    data: externalMedicinesData, 
+    isLoading: isLoadingExternal, 
+    error: externalError,
+    refetch: refetchExternal
+  } = useQuery<ExternalMedicinesResponse>({
+    queryKey: ['/api/external-data/search', { q: externalSearchQuery }],
+    queryFn: async () => {
+      if (!externalSearchQuery || !isSearching) {
+        return { source: '1mg', query: '', medications: [] };
+      }
+      
+      console.log('Fetching external medicines data...');
+      const response = await fetch(`/api/external-data/search?q=${encodeURIComponent(externalSearchQuery)}&limit=24`);
+      
+      if (!response.ok) {
+        console.error('Failed to fetch external medicines:', response.statusText);
+        throw new Error('Failed to fetch external medicines');
+      }
+      
+      const data = await response.json();
+      console.log('External medicines data:', data);
+      setIsSearching(false);
+      return data;
+    },
+    enabled: isSearching && !!externalSearchQuery
   });
 
   // Filter and sort medicines
@@ -301,6 +352,12 @@ export default function Products() {
                 Branded Medicines
                 <Badge variant="secondary" className="ml-2">{brandedMedicinesCount}</Badge>
               </TabsTrigger>
+              <TabsTrigger value="external" className="flex-1">
+                <div className="flex items-center">
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  1mg Data
+                </div>
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="all" className="mt-4">
@@ -380,9 +437,149 @@ export default function Products() {
                 </CardContent>
               </Card>
             </TabsContent>
+            
+            <TabsContent value="external" className="mt-4">
+              <Card>
+                <CardHeader className="pb-0">
+                  <CardTitle className="flex items-center">
+                    <ExternalLink className="h-5 w-5 mr-2" />
+                    1mg Medicine Data
+                  </CardTitle>
+                  <CardDescription>
+                    Search for medicines from 1mg's extensive database of Indian medications.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="mb-6">
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Search 1mg medicines..."
+                        value={externalSearchQuery}
+                        onChange={(e) => setExternalSearchQuery(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button 
+                        onClick={() => setIsSearching(true)}
+                        disabled={!externalSearchQuery || isLoadingExternal}
+                      >
+                        {isLoadingExternal ? (
+                          <span className="flex items-center">
+                            <RefreshCcw className="h-4 w-4 animate-spin mr-2" />
+                            Searching...
+                          </span>
+                        ) : (
+                          'Search'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {externalMedicinesData?.medications && externalMedicinesData.medications.length > 0 && (
+                    <div className="flex items-center p-3 mb-4 bg-green-50 border border-green-200 rounded-lg">
+                      <InfoIcon className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                      <p className="text-sm text-green-700">
+                        Found {externalMedicinesData.medications.length} medicines from {externalMedicinesData.source} for your search.
+                      </p>
+                    </div>
+                  )}
+
+                  {isLoadingExternal ? (
+                    renderSkeletons()
+                  ) : externalError ? (
+                    <ErrorState 
+                      message="We're having trouble connecting to external medicine sources. Please try again later."
+                      retry={() => refetchExternal()}
+                    />
+                  ) : externalMedicinesData?.medications && externalMedicinesData.medications.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {externalMedicinesData.medications.map((medicine, index) => (
+                        <ExternalMedicineCard key={index} medicine={medicine} source={externalMedicinesData.source} />
+                      ))}
+                    </div>
+                  ) : externalSearchQuery && isSearching === false ? (
+                    <div className="text-center py-12">
+                      <AlertCircle className="h-10 w-10 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No external medicines found</h3>
+                      <p className="text-gray-500 max-w-md mx-auto">
+                        We couldn't find any medicines matching "{externalSearchQuery}" in our external data sources.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <ExternalLink className="h-10 w-10 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Search for external medicines</h3>
+                      <p className="text-gray-500 max-w-md mx-auto">
+                        Enter a medicine name or active ingredient to search 1mg's database.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
     </div>
   );
 }
+
+// Component to display an external medicine card
+const ExternalMedicineCard = ({ medicine, source }: { medicine: ExternalMedicine, source: string }) => {
+  return (
+    <Card className="overflow-hidden h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start gap-2">
+          <div>
+            <CardTitle className="text-lg line-clamp-2">{medicine.name}</CardTitle>
+            <CardDescription className="line-clamp-1">
+              {medicine.genericName || "Generic name not available"}
+            </CardDescription>
+          </div>
+          {medicine.isGeneric ? (
+            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Generic</Badge>
+          ) : (
+            <Badge variant="outline">Branded</Badge>
+          )}
+        </div>
+      </CardHeader>
+      
+      <CardContent className="pb-2 flex-grow">
+        <div className="space-y-2">
+          <div className="text-sm">
+            <span className="font-medium">Manufacturer: </span>
+            <span className="text-gray-600">{medicine.manufacturer || "Unknown"}</span>
+          </div>
+          
+          {medicine.activeIngredient && (
+            <div className="text-sm">
+              <span className="font-medium">Active Ingredient: </span>
+              <span className="text-gray-600">{medicine.activeIngredient}</span>
+            </div>
+          )}
+          
+          {medicine.dosage && (
+            <div className="text-sm">
+              <span className="font-medium">Dosage: </span>
+              <span className="text-gray-600">{medicine.dosage}</span>
+            </div>
+          )}
+        </div>
+      </CardContent>
+      
+      <CardFooter className="flex justify-between items-center pt-2 border-t">
+        <div className="text-lg font-semibold">
+          {medicine.price !== undefined 
+            ? `₹${medicine.price.toFixed(2)}` 
+            : <span className="text-gray-500">Price N/A</span>
+          }
+        </div>
+        
+        <div className="flex items-center text-xs text-gray-500">
+          <ExternalLink className="h-3 w-3 mr-1" />
+          <span>Data from {source}</span>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+};
