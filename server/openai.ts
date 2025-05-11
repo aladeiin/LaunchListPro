@@ -150,25 +150,36 @@ export async function getCompoundMedicationAlternatives(
     
     // Try to parse the response as JSON
     try {
-      // Extract JSON array if it exists in the content
-      const match = content.match(/\[.*\]/s);
-      if (match) {
-        const jsonContent = match[0];
-        const alternatives = JSON.parse(jsonContent);
-        if (Array.isArray(alternatives)) {
-          console.log(`[COMPOUND-ALT] Found ${alternatives.length} AI-generated alternatives`);
-          return alternatives;
+      // Try to parse directly first
+      try {
+        const parsedContent = JSON.parse(content);
+        if (Array.isArray(parsedContent)) {
+          console.log(`[COMPOUND-ALT] Found ${parsedContent.length} AI-generated alternatives`);
+          return parsedContent;
+        }
+      } catch {
+        // If direct parsing fails, try to extract array from text
+        const startIndex = content.indexOf('[');
+        const endIndex = content.lastIndexOf(']');
+        
+        if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+          const jsonContent = content.substring(startIndex, endIndex + 1);
+          const alternatives = JSON.parse(jsonContent);
+          if (Array.isArray(alternatives)) {
+            console.log(`[COMPOUND-ALT] Found ${alternatives.length} AI-generated alternatives by extracting JSON`);
+            return alternatives;
+          }
         }
       }
       
       console.log(`[COMPOUND-ALT] Could not extract array from content`);
       return [];
-    } catch (error) {
-      console.error(`[COMPOUND-ALT] Error parsing response:`, error);
+    } catch (error: any) {
+      console.error(`[COMPOUND-ALT] Error parsing response: ${error?.message || 'Unknown error'}`);
       return [];
     }
-  } catch (error) {
-    console.error(`[COMPOUND-ALT] Error generating alternatives:`, error);
+  } catch (error: any) {
+    console.error(`[COMPOUND-ALT] Error generating alternatives: ${error?.message || 'Unknown error'}`);
     return [];
   }
 }
@@ -259,6 +270,8 @@ const FALLBACK_RESPONSES = [
   "I'm designed to help you find affordable medication alternatives with price comparisons. For example, many common prescription medications have generic alternatives that can be significantly less expensive (often 60-90% cheaper) but equally effective."
 ];
 
+import { processCompoundMedicationQuery } from './lib/compound-medication-handler';
+
 export async function getChatResponse(userMessage: string): Promise<string> {
   console.log("[OPENAI-CHAT] User message:", userMessage);
   console.log("[OPENAI-CHAT] API Key exists:", process.env.OPENAI_API_KEY ? "Yes (length: " + process.env.OPENAI_API_KEY.length + ")" : "No");
@@ -279,6 +292,15 @@ export async function getChatResponse(userMessage: string): Promise<string> {
   if (medicationQuery.queryType !== 'unknown' && medicationQuery.medicineName) {
     try {
       console.log(`[MEDICATION-API] Detected ${medicationQuery.queryType} query for "${medicationQuery.medicineName}"`);
+      
+      // Check if this is a compound medication and we want alternatives
+      if (medicationQuery.queryType === 'alternatives') {
+        const compoundResponse = await processCompoundMedicationQuery(medicationQuery.medicineName);
+        if (compoundResponse) {
+          console.log("[MEDICATION-API] Processed as compound medication");
+          return compoundResponse;
+        }
+      }
       
       // Get comprehensive medication info
       const medicationInfo = await getComprehensiveMedicationInfo(medicationQuery.medicineName);
