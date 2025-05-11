@@ -117,7 +117,7 @@ export async function getMedicineContext(medicineName: string) {
   
   try {
     // First try to get information from our 1mg processor
-    const { getMedicineInfo } = await import('../services/1mg-medicine-processor');
+    const { getMedicineInfo, searchMedicationsBySalt } = await import('../services/1mg-medicine-processor');
     const medicineInfo = await getMedicineInfo(medicineName);
     
     if (medicineInfo) {
@@ -129,8 +129,67 @@ export async function getMedicineContext(medicineName: string) {
         `${ing.name}${ing.dosage ? ` ${ing.dosage}${ing.unit}` : ''}`
       ).join(', ');
       
-      // Find alternatives
-      const alternatives = medicineInfo.similarBrands?.slice(0, 3) || [];
+      // Check if this is a compound medication (has multiple ingredients)
+      const isCompoundMedication = medicineInfo.activeIngredients.length > 1;
+      console.log(`[CHATBOT-TRAINER] Medicine is${isCompoundMedication ? '' : ' not'} a compound medication with ${medicineInfo.activeIngredients.length} ingredients`);
+      
+      // Find alternatives from similarBrands
+      let alternatives = medicineInfo.similarBrands?.slice(0, 5) || [];
+      
+      // For compound medications, aggressively search for alternatives if none found
+      if (isCompoundMedication && (!alternatives || alternatives.length === 0)) {
+        console.log(`[CHATBOT-TRAINER] Compound medication with no direct alternatives, searching by ingredients...`);
+        
+        // Try to find substitutes by searching for each active ingredient
+        interface IngredientSubstitutes {
+          ingredient: string;
+          medications: string[];
+        }
+        const allSubstitutesByIngredient: IngredientSubstitutes[] = [];
+        
+        for (const ingredient of medicineInfo.activeIngredients) {
+          // Skip ingredients without a name
+          if (!ingredient.name) continue;
+          
+          // Search for medications with this ingredient
+          const medicationsWithIngredient = await searchMedicationsBySalt(ingredient.name);
+          
+          // Add to our list of potential substitutes
+          if (medicationsWithIngredient && medicationsWithIngredient.length > 0) {
+            const matchingMeds = medicationsWithIngredient
+              .filter(med => med.name.toLowerCase() !== medicineName.toLowerCase())
+              .map(med => med.name);
+            
+            allSubstitutesByIngredient.push({
+              ingredient: ingredient.name,
+              medications: matchingMeds
+            });
+          }
+        }
+        
+        // Log what we found
+        console.log(`[CHATBOT-TRAINER] Found potential alternatives by ingredient search:`, 
+          allSubstitutesByIngredient.map(x => `${x.ingredient}: ${x.medications.length} matches`).join(', '));
+        
+        // Look for medications that include all the active ingredients
+        // This is a simplistic approach - in a real system we'd use a more sophisticated algorithm
+        if (allSubstitutesByIngredient.length > 0) {
+          const firstIngredientMeds = allSubstitutesByIngredient[0].medications;
+          
+          // Find medications that appear in all ingredient lists (crude intersection)
+          const commonMeds = firstIngredientMeds.filter(med => {
+            // Check if this med appears in all other ingredient lists
+            return allSubstitutesByIngredient.every(subList => 
+              subList.medications.includes(med)
+            );
+          });
+          
+          if (commonMeds.length > 0) {
+            alternatives = commonMeds.slice(0, 5);
+            console.log(`[CHATBOT-TRAINER] Found ${alternatives.length} compound alternatives with all ingredients`);
+          }
+        }
+      }
       
       return {
         brandName: medicineInfo.brandName,
@@ -144,7 +203,8 @@ export async function getMedicineContext(medicineName: string) {
         isGeneric: medicineInfo.isGeneric,
         dosage: medicineInfo.activeIngredients.map(ing => `${ing.dosage}${ing.unit}`).join(', '),
         from1mg: true,
-        alternatives
+        alternatives,
+        isCompoundMedication
       };
     }
   } catch (error) {

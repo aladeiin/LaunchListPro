@@ -60,12 +60,48 @@ export async function getComprehensiveMedicationInfo(medicineName: string): Prom
     
     // Determine best active ingredient from all available sources
     const activeIngredient = medicine?.activeIngredient || 
-                            (indianContext && indianContext.isKnownMedicine ? indianContext.genericName : '') ||
+                            (indianContext && indianContext.isKnownMedicine ? indianContext.saltInfo || indianContext.genericName : '') ||
                             alternativeMedicine?.activeIngredient || '';
     
-    // Find alternatives with the same active ingredient
+    // Check if this is a compound medication based on active ingredients
+    const isCompoundMedication = activeIngredient.includes(',') || activeIngredient.includes('+');
+    
+    // Find alternatives with the same active ingredient(s)
     let alternatives: Medicine[] = [];
-    if (activeIngredient) {
+    
+    // If we have context from 1mg and it has alternatives already identified
+    if (indianContext && indianContext.isKnownMedicine && indianContext.alternatives && indianContext.alternatives.length > 0) {
+      console.log(`[MEDICATION-API] Using pre-identified alternatives from 1mg for ${medicineName} (${indianContext.alternatives.length} alternatives)`);
+      
+      // Convert the alternative names to Medicine objects
+      const alternativeNames = indianContext.alternatives;
+      for (const altName of alternativeNames) {
+        // Try to find this alternative in our database
+        const altMedicine = await storage.getMedicineByName(altName);
+        if (altMedicine) {
+          alternatives.push(altMedicine);
+        } else {
+          // Create a placeholder Medicine object
+          alternatives.push({
+            id: 10000 + alternatives.length, // Placeholder ID
+            name: altName,
+            genericName: indianContext.genericName || '',
+            activeIngredient: activeIngredient,
+            description: `Alternative to ${medicineName}`,
+            manufacturer: "Unknown",
+            isGeneric: false,
+            price: indianContext.priceRange ? parseFloat(indianContext.priceRange.replace('₹', '')) * 0.9 : 100, // Estimate 10% cheaper
+            inStock: true,
+            dosage: indianContext.dosage || '',
+            imageUrl: '',
+            availableAt: [],
+            stockCount: 10
+          });
+        }
+      }
+    }
+    // Otherwise, look for alternatives in our database
+    else if (activeIngredient) {
       try {
         const allMedicines = await storage.getMedicines();
         alternatives = allMedicines.filter(med => 
