@@ -4,6 +4,7 @@ import {
   formatMedicationResponse,
   detectMedicationQueryType
 } from "./lib/medication-api-integration";
+import { processCompoundMedicationQuery } from './lib/compound-medication-handler';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -102,84 +103,72 @@ export async function getCompoundMedicationAlternatives(
     return knownAlternatives[normalizedName];
   }
   
-  // If we don't have hardcoded alternatives, try generating them with AI
+  // If no hardcoded alternatives found, try to find from 1mg data
   try {
-    console.log(`[COMPOUND-ALT] No hardcoded alternatives found, using AI`);
+    console.log(`[COMPOUND-ALT] No hardcoded alternatives found, using 1mg data`);
     
-    // Format ingredient information
-    const formattedIngredients = ingredients.map(ing => {
-      // Try to extract name and dosage if present
-      const dosageMatch = ing.match(/([a-zA-Z\s]+)\s+(\d+(?:\.\d+)?(?:\s*(?:mg|mcg|g|ml|IU))?)/);
-      if (dosageMatch) {
-        return `${dosageMatch[1].trim()} (${dosageMatch[2].trim()})`;
-      }
-      return ing.trim();
-    });
+    // Import the 1mg medicine processor
+    const { getMedicineInfo, loadAllMedicineData } = await import('./services/1mg-medicine-processor');
     
-    // Create the prompt content
-    const promptContent = 
-      `I need to find alternative combination medications in India that contain the SAME active ingredients as ${medicineName}.\n\n` +
-      `${medicineName} contains these active ingredients:\n` +
-      formattedIngredients.map(ing => `- ${ing}`).join('\n') + '\n\n' +
-      `Please identify other Indian brand names that contain the SAME combination of active ingredients in similar dosages.` +
-      `Only include medications that contain ALL these ingredients together in ONE formulation.` +
-      `Do NOT include ${medicineName} itself in your list.` +
-      `Return ONLY a JSON array of alternative medication brand names.`;
-      
-    // Make the API call
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert Indian pharmaceutical database specialized in identifying compound medications."
-        },
-        {
-          role: "user",
-          content: promptContent
-        }
-      ],
-      temperature: 0.2
-    });
+    // First try to get specific information about this medicine
+    const medicineInfo = await getMedicineInfo(medicineName);
     
-    // Extract the content
-    const content = response.choices[0].message.content;
-    if (!content) {
-      return [];
+    // If we have info about this medicine and it has similar brands, use those
+    if (medicineInfo && medicineInfo.hasSimilarBrands && medicineInfo.similarBrands && medicineInfo.similarBrands.length > 0) {
+      console.log(`[COMPOUND-ALT] Found ${medicineInfo.similarBrands.length} alternatives from 1mg data for ${medicineName}`);
+      return medicineInfo.similarBrands;
     }
     
-    // Try to parse the response as JSON
-    try {
-      // Try to parse directly first
-      try {
-        const parsedContent = JSON.parse(content);
-        if (Array.isArray(parsedContent)) {
-          console.log(`[COMPOUND-ALT] Found ${parsedContent.length} AI-generated alternatives`);
-          return parsedContent;
-        }
-      } catch {
-        // If direct parsing fails, try to extract array from text
-        const startIndex = content.indexOf('[');
-        const endIndex = content.lastIndexOf(']');
+    // If no direct match, try to find alternatives by matching ingredients
+    console.log(`[COMPOUND-ALT] No direct match found, searching by ingredients`);
+    
+    // Load all medicine data
+    const medicationData = await loadAllMedicineData();
+    
+    // Extract just the ingredient names without dosages
+    const ingredientNames = ingredients.map(ing => {
+      const nameMatch = ing.match(/([a-zA-Z\s]+)\s+\d+/);
+      return nameMatch ? nameMatch[1].trim().toLowerCase() : ing.trim().toLowerCase();
+    });
+    
+    console.log(`[COMPOUND-ALT] Looking for medications with ingredients: ${ingredientNames.join(', ')}`);
+    
+    // Find medications that contain all the specified ingredients
+    const matchedAlternatives: string[] = [];
+    
+    for (const [medName, medication] of Object.entries(medicationData)) {
+      // Skip the original medicine
+      if (medName.toLowerCase() === medicineName.toLowerCase()) continue;
+      
+      // Only check medications with multiple ingredients
+      if (medication.activeIngredients.length >= ingredientNames.length) {
+        // Get the ingredient names for this medication
+        const medIngredientNames = medication.activeIngredients.map(ing => 
+          ing.name.toLowerCase()
+        );
         
-        if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-          const jsonContent = content.substring(startIndex, endIndex + 1);
-          const alternatives = JSON.parse(jsonContent);
-          if (Array.isArray(alternatives)) {
-            console.log(`[COMPOUND-ALT] Found ${alternatives.length} AI-generated alternatives by extracting JSON`);
-            return alternatives;
-          }
+        // Check if all our target ingredients are in this medication
+        const hasAllIngredients = ingredientNames.every(ingredient => 
+          medIngredientNames.some(medIngredient => 
+            medIngredient.includes(ingredient) || ingredient.includes(medIngredient)
+          )
+        );
+        
+        if (hasAllIngredients) {
+          matchedAlternatives.push(medication.name);
         }
       }
-      
-      console.log(`[COMPOUND-ALT] Could not extract array from content`);
-      return [];
-    } catch (error: any) {
-      console.error(`[COMPOUND-ALT] Error parsing response: ${error?.message || 'Unknown error'}`);
-      return [];
     }
+    
+    if (matchedAlternatives.length > 0) {
+      console.log(`[COMPOUND-ALT] Found ${matchedAlternatives.length} alternatives by matching ingredients`);
+      return matchedAlternatives.slice(0, 10); // Limit to 10
+    }
+    
+    console.log(`[COMPOUND-ALT] No alternatives found in 1mg data`);
+    return [];
   } catch (error: any) {
-    console.error(`[COMPOUND-ALT] Error generating alternatives: ${error?.message || 'Unknown error'}`);
+    console.error(`[COMPOUND-ALT] Error processing 1mg data: ${error?.message || 'Unknown error'}`);
     return [];
   }
 }
@@ -269,8 +258,6 @@ const FALLBACK_RESPONSES = [
   "When fully operational, I can answer questions about drug interactions, side effects, and lower-cost alternatives with detailed price comparisons. For immediate medication information, please consult your healthcare provider.",
   "I'm designed to help you find affordable medication alternatives with price comparisons. For example, many common prescription medications have generic alternatives that can be significantly less expensive (often 60-90% cheaper) but equally effective."
 ];
-
-import { processCompoundMedicationQuery } from './lib/compound-medication-handler';
 
 export async function getChatResponse(userMessage: string): Promise<string> {
   console.log("[OPENAI-CHAT] User message:", userMessage);
@@ -395,14 +382,12 @@ export async function getChatResponse(userMessage: string): Promise<string> {
         errorMessage.includes("quota exceeded") ||
         errorMessage.includes("insufficient_quota")) {
       
-      console.log("[OPENAI-CHAT] Rate limit detected, using fallback response");
-      // Select a random fallback response
+      // Return a random fallback response for rate limit errors
       const randomIndex = Math.floor(Math.random() * FALLBACK_RESPONSES.length);
-      return FALLBACK_RESPONSES[randomIndex] + 
-             "\n\n(Note: Our AI service is currently experiencing high demand. This is a general response. For specific medical advice, please consult a healthcare professional.)";
+      return FALLBACK_RESPONSES[randomIndex] + "\n\n(Note: Our service is experiencing high demand. This is a general response. For specific medication information, please consult a healthcare professional.)";
     }
     
-    // Return a general error message for any other type of error
-    return "I'm sorry, I'm having trouble processing your request at the moment. Our systems are experiencing high demand. Please try again in a few minutes.\n\n(Note: For specific medical advice, please consult a healthcare professional.)";
+    // For other errors, return a generic error message
+    return "I apologize, but I'm currently unable to process your request. Please try again later or consult a healthcare professional for specific medication information.\n\n(Note: This information is for educational purposes only. Always consult a healthcare professional for medical advice.)";
   }
 }
