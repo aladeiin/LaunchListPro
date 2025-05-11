@@ -30,6 +30,10 @@ const knownCompoundIngredients: Record<string, string[]> = {
   // Amlodipine combinations
   'amlovas-at': ['Amlodipine 5mg', 'Atorvastatin 10mg'],
   'amlodac-at': ['Amlodipine 5mg', 'Atorvastatin 10mg'],
+  
+  // Telmisartan complex combinations
+  'telpres-ct': ['Telmisartan 40mg', 'Chlorthalidone 12.5mg'],
+  'telpres-amt': ['Telmisartan 40mg', 'Amlodipine 5mg', 'Chlorthalidone 12.5mg'],
 };
 
 /**

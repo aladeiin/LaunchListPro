@@ -4,81 +4,101 @@
  * This script demonstrates how to integrate compound medication detection
  * and alternatives lookup into the chatbot response flow
  */
-import { getCompoundMedicationAlternatives } from '../openai';
 
-// Test compound medications with sample user queries
-const TEST_CASES = [
-  {
-    query: "What are alternatives for Telma-AM?",
-    medicineName: "Telma-AM",
-    ingredients: ["Telmisartan 40mg", "Amlodipine 5mg"]
-  },
-  {
-    query: "Are there cheaper options than Glycomet-GP 2?",
-    medicineName: "Glycomet-GP 2",
-    ingredients: ["Metformin 500mg", "Glimepiride 2mg"]
-  },
-  {
-    query: "Can I substitute Cardace-H with something else?",
-    medicineName: "Cardace-H",
-    ingredients: ["Ramipril 5mg", "Hydrochlorothiazide 12.5mg"]
-  }
-];
+import { isCompoundMedicine, getCompoundIngredients, getCompoundAlternativesResponse } from '../lib/compound-medication-handler';
+import { detectMedicationQueryType } from '../lib/medication-api-integration';
 
-// Format the ingredients for display
+/**
+ * Format a list of ingredients for display
+ */
 function formatIngredients(ingredients: string[]): string {
+  if (ingredients.length === 0) return 'No ingredients identified';
   return ingredients.map(ing => `- ${ing}`).join('\n');
 }
 
-// Generate a formatted alternatives response
+/**
+ * Format alternatives response in a user-friendly way
+ */
 function formatAlternativesResponse(medicineName: string, alternatives: string[]): string {
   if (alternatives.length === 0) {
-    return `**${medicineName}** is a combination medication, but I couldn't find specific alternatives with identical ingredients. Please consult your healthcare provider for appropriate substitutions.`;
+    return `I couldn't find specific alternatives with identical ingredients for ${medicineName}. Please consult your healthcare provider for appropriate substitutions.`;
   }
   
-  return `**${medicineName}** is a combination medication containing multiple active ingredients. Below are some alternative brands that contain the same combination of ingredients:
-
-${alternatives.map((alt, i) => `${i+1}. **${alt}**`).join('\n')}
-
-These alternatives contain the same active ingredients in similar dosages. Please consult your healthcare provider before switching medications.`;
+  return `${medicineName} is a combination medication. Here are some alternative brands that contain the same combination of ingredients:
+    
+${alternatives.map((alt, i) => `${i+1}. ${alt}`).join('\n')}
+    
+These alternatives contain the same active ingredients in similar dosages. Always consult your healthcare provider before switching medications.`;
 }
 
+/**
+ * Process a medication request that might involve a compound medicine
+ */
 async function processMedicationRequest(query: string, medicineName: string, ingredients: string[]): Promise<string> {
-  console.log(`\n=== Processing query: "${query}" ===`);
-  console.log(`Detected compound medication: ${medicineName}`);
-  console.log(`Ingredients:\n${formatIngredients(ingredients)}`);
+  console.log(`Processing request for: ${medicineName}`);
+  console.log(`Ingredients: ${ingredients.join(', ')}`);
   
-  // Get alternatives
-  const alternatives = await getCompoundMedicationAlternatives(medicineName, ingredients);
-  console.log(`Found ${alternatives.length} alternatives`);
+  if (ingredients.length === 0) {
+    console.log('No ingredients identified, cannot process as compound medication');
+    return `Sorry, I couldn't identify the components of ${medicineName}. Please try another medication or consult your healthcare provider.`;
+  }
   
-  // Format and return the response
-  return formatAlternativesResponse(medicineName, alternatives);
+  try {
+    // Format response for compound medication alternatives
+    const response = await getCompoundAlternativesResponse(medicineName, ingredients);
+    return response;
+  } catch (error) {
+    console.error(`Error getting alternatives for ${medicineName}:`, error);
+    return `I encountered an error while searching for alternatives to ${medicineName}. Please try again later or consult your healthcare provider.`;
+  }
 }
 
+/**
+ * Main function to simulate chatbot conversation flow
+ */
 async function main() {
-  console.log('=== TESTING COMPOUND MEDICINE ALTERNATIVES IN CHATBOT ===\n');
+  // Sample user queries
+  const queries = [
+    'What are alternatives for Telma-AM?',
+    'Can you suggest alternatives for Glycomet-GP2?',
+    'What medications are similar to Cardace-H?',
+    'Are there any other options instead of Amlovas-AT?',
+    'What is a substitute for Telmikind-AM?',
+    'I need an alternative to Telsar-H',
+    'What can I use instead of Telpres-CT?'
+  ];
   
-  for (const testCase of TEST_CASES) {
-    try {
-      const response = await processMedicationRequest(
-        testCase.query,
-        testCase.medicineName, 
-        testCase.ingredients
-      );
-      
-      console.log('\nGenerated response:');
-      console.log('-'.repeat(50));
-      console.log(response);
-      console.log('-'.repeat(50));
-    } catch (error) {
-      console.error('Error processing request:', error);
+  console.log('=== COMPOUND MEDICATION CHATBOT SIMULATION ===\n');
+  
+  for (const query of queries) {
+    console.log(`USER: ${query}`);
+    
+    // Step 1: Detect medication and query type
+    const medicationQuery = await detectMedicationQueryType(query);
+    
+    if (medicationQuery.queryType === 'unknown' || !medicationQuery.medicineName) {
+      console.log('CHATBOT: I couldn\'t identify a specific medication in your question. Could you please mention the exact name of the medication you\'re asking about?\n');
+      continue;
     }
     
-    console.log('\n' + '='.repeat(80));
+    console.log(`Detected medication: ${medicationQuery.medicineName}`);
+    console.log(`Query type: ${medicationQuery.queryType}`);
+    
+    // Step 2: Check if compound medicine and request is for alternatives
+    if (medicationQuery.queryType === 'alternatives' && isCompoundMedicine(medicationQuery.medicineName)) {
+      // Step 3: Get ingredients for the compound medication
+      const ingredients = getCompoundIngredients(medicationQuery.medicineName);
+      
+      // Step 4: Process as compound medication
+      const response = await processMedicationRequest(query, medicationQuery.medicineName, ingredients);
+      console.log(`CHATBOT: ${response}\n`);
+    } else {
+      console.log('CHATBOT: This would be processed by the regular medication API flow.\n');
+    }
+    
+    console.log('-'.repeat(80));
   }
-  
-  console.log('\nTests complete');
 }
 
-main().catch(console.error);
+// Run the simulation
+main().catch(error => console.error('Error in simulation:', error));

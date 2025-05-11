@@ -1,72 +1,85 @@
 /**
- * Test script for compound medicine substitutes
- * This script tests the ability of our system to find alternatives for compound medications
+ * Test script for compound medication detection
+ * 
+ * This script tests the detection of compound medications
+ * using our pattern matching system
  */
-import { getMedicineContext } from '../lib/chatbot-trainer';
-import { getChatResponse } from '../openai';
 
-// Test compound medicines
-const TEST_COMPOUND_MEDICINES = [
-  'Telvas Beta 50', // Contains telmisartan and metoprolol
-  'Telma-AM Tablet',  // Contains telmisartan and amlodipine
-  'Amaryl-M 1mg Tablet', // Contains glimepiride and metformin
-  'Glycomet-GP 1 Tablet', // Contains metformin and glimepiride
-  'Trivastal LA 50mg/1000mg Tablet', // Contains teriflunomide and metformin
-  'Trika Plus', // Contains alprazolam and propranolol
-  'Cardace H 10', // Contains ramipril and hydrochlorothiazide
-  'Cilacar T', // Contains cilnidipine and telmisartan
+import { isCompoundMedicine, getCompoundIngredients } from '../lib/compound-medication-handler';
+
+// List of medicines to test (mix of compound and non-compound)
+const medicineNames = [
+  // Known compound medicines
+  'Telma-AM',
+  'Telma-H',
+  'Glycomet-GP',
+  'Glycomet-GP1',
+  'Glycomet-GP2',
+  'Cardace-H',
+  'Cardace-AM',
+  'Amlovas-AT',
+  'Telma AM',  // Space instead of hyphen
+  'Telma H',
+  'Cardace H',
+  'Telmikind AM',
+  'Telpres-CT',
+  'Tazloc Plus',
+  
+  // Non-compound medicines
+  'Telma',
+  'Glycomet',
+  'Cardace',
+  'Amlovas',
+  'Telmikind',
+  'Telpres',
+  'Metformin',
+  'Amlodipine',
+  'Glimepiride',
+  'Atorvastatin'
 ];
 
-async function testCompoundMedicineContext() {
-  console.log('\n=== TESTING COMPOUND MEDICINE CONTEXT ===\n');
+function testCompoundDetection() {
+  console.log('=== COMPOUND MEDICATION DETECTION TEST ===');
   
-  for (const medicine of TEST_COMPOUND_MEDICINES) {
-    console.log(`\n--- Testing: ${medicine} ---`);
-    
-    try {
-      const context = await getMedicineContext(medicine);
-      console.log(`Context found: ${context ? 'Yes' : 'No'}`);
-      if (context) {
-        console.log(`Brand Name: ${context.brandName}`);
-        console.log(`Generic Name: ${context.genericName}`);
-        console.log(`Salt Info: ${context.saltInfo}`);
-        console.log(`Alternatives: ${context.alternatives?.join(', ') || 'None'}`);
-      } else {
-        console.log('No context found in our medicine database');
-      }
-    } catch (error) {
-      console.error('Error getting medicine context:', error);
-    }
-  }
-}
-
-async function testCompoundMedicineChatbot() {
-  console.log('\n=== TESTING COMPOUND MEDICINE ALTERNATIVES IN CHATBOT ===\n');
+  let correctDetections = 0;
+  let falsePositives = 0;
+  let falseNegatives = 0;
   
-  for (const medicine of TEST_COMPOUND_MEDICINES) {
-    console.log(`\n--- Testing Chatbot with: ${medicine} ---`);
+  for (const medicine of medicineNames) {
+    const isCompound = isCompoundMedicine(medicine);
+    // Check if the name contains common compound indicators
+    const shouldBeCompound = /-|Plus|\sH|\sAM|\sAT|\sCT|\sM\b|\sGP/.test(medicine);
     
-    try {
-      const query = `What are substitutes for ${medicine}?`;
-      console.log(`Query: "${query}"`);
+    console.log(`${medicine}: ${isCompound ? '✓ COMPOUND' : '✗ REGULAR'}`);
+    
+    if (isCompound && shouldBeCompound) {
+      correctDetections++;
       
-      const response = await getChatResponse(query);
-      console.log(`\nChatbot Response:\n${response}`);
-    } catch (error) {
-      console.error('Error getting chatbot response:', error);
+      // If it's a compound, test ingredient extraction
+      const ingredients = getCompoundIngredients(medicine);
+      if (ingredients.length > 0) {
+        console.log(`  Ingredients: ${ingredients.join(', ')}`);
+      } else {
+        console.log('  ⚠️ No ingredients identified');
+      }
+    } else if (isCompound && !shouldBeCompound) {
+      falsePositives++;
+      console.log('  ⚠️ Possible false positive');
+    } else if (!isCompound && shouldBeCompound) {
+      falseNegatives++;
+      console.log('  ⚠️ Possible false negative');
+    } else {
+      correctDetections++;
     }
-    
-    console.log('\n' + '-'.repeat(80));
   }
+  
+  const total = medicineNames.length;
+  console.log('\n=== SUMMARY ===');
+  console.log(`Total medicines tested: ${total}`);
+  console.log(`Correct detections: ${correctDetections} (${(correctDetections/total*100).toFixed(1)}%)`);
+  console.log(`False positives: ${falsePositives} (${(falsePositives/total*100).toFixed(1)}%)`);
+  console.log(`False negatives: ${falseNegatives} (${(falseNegatives/total*100).toFixed(1)}%)`);
 }
 
-async function main() {
-  console.log('=== COMPOUND MEDICINE TEST ===');
-  
-  await testCompoundMedicineContext();
-  await testCompoundMedicineChatbot();
-  
-  console.log('\n=== TEST COMPLETED ===');
-}
-
-main().catch(console.error);
+// Run the test
+testCompoundDetection();
