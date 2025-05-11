@@ -276,11 +276,15 @@ export function formatMedicationResponse(info: MedicationInfo, queryType: string
 
 /**
  * Format alternatives information
+ * Enhanced to properly display alternatives for compound medications
  */
 function formatAlternativesResponse(info: MedicationInfo): string {
   if (!info.alternatives || info.alternatives.length === 0) {
-    return `I couldn't find any alternatives for ${info.name} with the same active ingredient (${info.activeIngredient || 'unknown'}).`;
+    return `I couldn't find any alternatives for ${info.name} with the same active ingredients (${info.activeIngredient || 'unknown'}).`;
   }
+  
+  // Determine if this is likely a compound medication based on active ingredients
+  const isCompoundMedication = info.activeIngredient.includes(',') || info.activeIngredient.includes('+');
   
   let response = `**${info.name}** contains ${info.activeIngredient || info.genericName}.\n\n`;
   
@@ -288,7 +292,11 @@ function formatAlternativesResponse(info: MedicationInfo): string {
     response += `${info.description}\n\n`;
   }
   
-  response += `Here are some alternatives with the same active ingredient:\n\n`;
+  if (isCompoundMedication) {
+    response += `Here are some alternative brands with the same combination of active ingredients:\n\n`;
+  } else {
+    response += `Here are some alternatives with the same active ingredient:\n\n`;
+  }
   
   // Get up to 5 alternatives
   const topAlternatives = info.alternatives.slice(0, 5);
@@ -307,6 +315,7 @@ function formatAlternativesResponse(info: MedicationInfo): string {
       
     response += `${index + 1}. **${alt.name}** - ₹${alt.price.toFixed(2)}${savingsText}\n`;
     response += `   Manufacturer: ${alt.manufacturer}\n`;
+    response += `   Active Ingredients: ${alt.activeIngredient}\n`;
     response += `   ${alt.isGeneric ? 'Generic' : 'Branded'} Medicine\n\n`;
   });
   
@@ -325,7 +334,11 @@ function formatAlternativesResponse(info: MedicationInfo): string {
     }
   }
   
-  response += `Remember, it's important to consult your healthcare provider before making any changes to your medication regimen.`;
+  if (isCompoundMedication) {
+    response += `When switching between combination medications, it's particularly important to verify that all active ingredients and their dosages are appropriate for your condition. `;
+  }
+  
+  response += `Remember, always consult your healthcare provider before making any changes to your medication regimen.`;
   
   return response;
 }

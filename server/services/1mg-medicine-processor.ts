@@ -252,6 +252,7 @@ export async function loadAllMedicineData(): Promise<MedicineDataset> {
 
 /**
  * Find similar brands for each medication based on active ingredients
+ * Enhanced to handle compound medications (medicines with multiple active ingredients)
  */
 async function findSimilarBrands(): Promise<void> {
   console.log('[1MG-PROCESSOR] Finding similar brands based on active ingredients');
@@ -259,8 +260,12 @@ async function findSimilarBrands(): Promise<void> {
   // Create an index of medications by active ingredient
   const ingredientIndex: { [key: string]: string[] } = {};
   
-  // First pass: build the ingredient index
+  // Create an index of compound medications by their ingredient fingerprint
+  const compoundIndex: { [key: string]: string[] } = {};
+  
+  // First pass: build the ingredient indices
   for (const [name, medication] of Object.entries(medicineCache)) {
+    // For single-ingredient medications
     for (const ingredient of medication.activeIngredients) {
       const key = ingredient.name.toLowerCase();
       if (!ingredientIndex[key]) {
@@ -268,16 +273,74 @@ async function findSimilarBrands(): Promise<void> {
       }
       ingredientIndex[key].push(name);
     }
+    
+    // For compound medications (those with multiple ingredients)
+    if (medication.activeIngredients.length > 1) {
+      // Create a fingerprint of the active ingredients sorted alphabetically with dosages
+      const ingredientFingerprint = medication.activeIngredients
+        .map(ing => `${ing.name.toLowerCase()}${ing.dosage ? `_${ing.dosage}${ing.unit}` : ''}`)
+        .sort()
+        .join('|');
+      
+      if (!compoundIndex[ingredientFingerprint]) {
+        compoundIndex[ingredientFingerprint] = [];
+      }
+      compoundIndex[ingredientFingerprint].push(name);
+      
+      // Also create a fingerprint without dosages for broader matching
+      const ingredientNameFingerprint = medication.activeIngredients
+        .map(ing => ing.name.toLowerCase())
+        .sort()
+        .join('|');
+      
+      if (!compoundIndex[ingredientNameFingerprint]) {
+        compoundIndex[ingredientNameFingerprint] = [];
+      }
+      compoundIndex[ingredientNameFingerprint].push(name);
+    }
   }
   
   // Second pass: find similar brands
   for (const [name, medication] of Object.entries(medicineCache)) {
     const similarBrands: string[] = [];
     
-    for (const ingredient of medication.activeIngredients) {
-      const key = ingredient.name.toLowerCase();
+    // For compound medications, prioritize finding exact compound matches
+    if (medication.activeIngredients.length > 1) {
+      // Create both precise and broader fingerprints
+      const preciseFingerprint = medication.activeIngredients
+        .map(ing => `${ing.name.toLowerCase()}${ing.dosage ? `_${ing.dosage}${ing.unit}` : ''}`)
+        .sort()
+        .join('|');
+      
+      const broadFingerprint = medication.activeIngredients
+        .map(ing => ing.name.toLowerCase())
+        .sort()
+        .join('|');
+      
+      // Look for precise matches first (same ingredients AND dosages)
+      if (compoundIndex[preciseFingerprint]) {
+        for (const similarName of compoundIndex[preciseFingerprint]) {
+          if (similarName !== name && !similarBrands.includes(similarName)) {
+            similarBrands.push(similarName);
+          }
+        }
+      }
+      
+      // Then look for broader matches (same ingredients but possibly different dosages)
+      if (compoundIndex[broadFingerprint]) {
+        for (const similarName of compoundIndex[broadFingerprint]) {
+          if (similarName !== name && !similarBrands.includes(similarName)) {
+            similarBrands.push(similarName);
+          }
+        }
+      }
+      
+      console.log(`[1MG-PROCESSOR] Found ${similarBrands.length} compound medicine alternatives for ${name}`);
+    } 
+    // For single-ingredient medications, find other medicines with the same ingredient
+    else if (medication.activeIngredients.length === 1) {
+      const key = medication.activeIngredients[0].name.toLowerCase();
       if (ingredientIndex[key]) {
-        // Add all medications with this ingredient
         for (const similarName of ingredientIndex[key]) {
           if (similarName !== name && !similarBrands.includes(similarName)) {
             similarBrands.push(similarName);
