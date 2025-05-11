@@ -13,6 +13,7 @@ import blogRouter from "./routes/blog";
 import { alternativesRouter } from "./routes/alternatives";
 import { merchantsRouter } from "./routes/merchants";
 import { externalDataRouter } from "./routes/external-data";
+import { compoundsRouter } from "./routes/compounds";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create API router
@@ -65,6 +66,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Mount external data router
   apiRouter.use("/external-data", externalDataRouter);
+  
+  // Mount compounds router
+  apiRouter.use("/compounds", compoundsRouter);
 
   // Get medication info via OpenAI
   apiRouter.get("/medication-info/:name", async (req: Request, res: Response) => {

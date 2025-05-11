@@ -48,26 +48,51 @@ export async function getCompoundMedicationAlternatives(
     return alternatives;
   }
   
+  // Make sure we have at least 2 ingredients for compound meds
+  if (ingredients.length < 2) {
+    console.log(`[OPENAI-COMPOUND] Not enough ingredients for ${medicineName} to be a compound medication`);
+    return alternatives;
+  }
+  
   try {
     console.log(`[OPENAI-COMPOUND] Finding alternatives for compound medicine: ${medicineName}`);
     console.log(`[OPENAI-COMPOUND] Ingredients: ${ingredients.join(", ")}`);
     
+    // Create formatted ingredient information
+    const formattedIngredients = ingredients.map(ing => {
+      // Try to extract name and dosage if present
+      const dosageMatch = ing.match(/([a-zA-Z\s]+)\s+(\d+(?:\.\d+)?(?:\s*(?:mg|mcg|g|ml|IU))?)/);
+      if (dosageMatch) {
+        return `${dosageMatch[1].trim()} (${dosageMatch[2].trim()})`;
+      }
+      return ing.trim();
+    });
+    
+    // For compound medications, we'll be much more specific in our prompt
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
           content: 
-            "You are an expert Indian pharmaceutical database specialized in identifying compound medications that contain the same active ingredients. You provide only factual information about Indian brand names and their compositions, not general advice."
+            "You are an expert Indian pharmaceutical database specialized in identifying compound medications with specific active ingredients and dosages. You provide only factual information about Indian brand names for combination medications."
         },
         {
           role: "user",
           content: 
-            `Identify Indian medication brand names that contain the EXACT SAME combination of these active ingredients:\n\n` +
-            `${ingredients.join("\n")}\n\n` +
-            `The original medicine is called "${medicineName}". Do not include this medicine in your response.\n\n` +
-            `Only include medications with all these ingredients together in the same formulation. Do not suggest individual medications for separate ingredients.\n\n` +
-            `Return ONLY a JSON array of alternative medication names with no additional text. Format: ["Brand Name 1", "Brand Name 2"]`
+            `I need to find alternative combination medications in India that contain the SAME active ingredients as ${medicineName}.\n\n` +
+            `${medicineName} contains these active ingredients:\n` +
+            formattedIngredients.map(ing => `- ${ing}`).join('\n') + '\n\n' +
+            `Please identify other Indian brand names that contain the SAME combination of active ingredients in similar dosages.\n\n` +
+            `Important guidelines:\n` +
+            `- Only include medications that contain ALL these ingredients together in ONE formulation\n` +
+            `- Do NOT suggest taking multiple separate medications\n` +
+            `- Do NOT include ${medicineName} itself in your list\n` +
+            `- If exact dosages aren't available, suggest alternatives with similar dosage ratios\n` +
+            `- Include common alternatives available in Indian pharmacies and Jan Aushadhi stores\n` +
+            `- If no alternatives exist, return an empty array\n\n` +
+            `Return your response ONLY as a JSON array of alternative medication brand names, e.g. ["Brand 1", "Brand 2"]\n` +
+            `Do not include any explanatory text outside the JSON.`
         }
       ],
       response_format: { type: "json_object" },

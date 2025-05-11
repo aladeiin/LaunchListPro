@@ -570,12 +570,114 @@ function formatGeneralInfoResponse(info: MedicationInfo): string {
 // Import our enhanced detection system
 import { detectQueryTypeWithContext, getMedicineContext } from './chatbot-trainer';
 
+/**
+ * Extract medication name from user query
+ * Enhanced to detect compound medication names
+ */
+async function extractMedicationName(query: string): Promise<string | null> {
+  // Common compound medication patterns in India
+  const compoundPatterns = [
+    // Brand-Component pattern (e.g., "Telvas Beta", "Telma AM") 
+    /\b([A-Za-z]+)[\s-]+(AM|PM|Beta|Plus|H|M|GP|XL|XR|SR|CR|HCT|MT|CT|AD)\b/i,
+    
+    // Brand-Component-Strength pattern (e.g., "Telma AM 40", "Glycomet GP 1")
+    /\b([A-Za-z]+)[\s-]+(AM|PM|Beta|Plus|H|M|GP|XL|XR|SR|CR|HCT|MT|CT|AD)[\s-]+\d+\b/i,
+    
+    // Brand-Strength with compound indicator (e.g., "Trika Plus 0.25")
+    /\b([A-Za-z]+\s+(?:Plus|Forte|Compound|Combo))[\s-]+\d+(?:\.\d+)?\b/i
+  ];
+  
+  // Look for compound medication patterns first
+  for (const pattern of compoundPatterns) {
+    const match = query.match(pattern);
+    if (match && match[0]) {
+      console.log(`[MEDICATION-EXTRACT] Detected compound medication: ${match[0]}`);
+      return match[0].trim();
+    }
+  }
+  
+  // Fall back to standard patterns
+  const standardPatterns = [
+    // Look for "alternatives to X" pattern
+    /alternative(?:s)?\s+(?:to|for)\s+([A-Za-z0-9\s\-]+)/i,
+    /substitute(?:s)?\s+(?:to|for)\s+([A-Za-z0-9\s\-]+)/i,
+    /(?:generic|cheaper)\s+(?:version of|alternative to)\s+([A-Za-z0-9\s\-]+)/i,
+    
+    // Look for "X alternatives" pattern
+    /([A-Za-z0-9\s\-]+)\s+alternative(?:s)?/i,
+    /([A-Za-z0-9\s\-]+)\s+substitute(?:s)?/i,
+    
+    // Direct medication name extraction
+    /\b([A-Za-z]+\s+\d+(?:\.\d+)?(?:\s*mg)?)\b/i,  // Brand with strength (e.g., "Crocin 500", "Telma 40")
+    /\b([A-Za-z]+\s+(?:Tablet|Capsule|Syrup|Injection|Cream|Gel))\b/i  // Brand with form
+  ];
+  
+  for (const pattern of standardPatterns) {
+    const match = query.match(pattern);
+    if (match && match[1]) {
+      const medicineName = match[1].trim();
+      console.log(`[MEDICATION-EXTRACT] Extracted standard medication: ${medicineName}`);
+      return medicineName;
+    }
+  }
+  
+  // No patterns matched
+  return null;
+}
+
 export async function detectMedicationQueryType(message: string): Promise<{ 
   queryType: string; 
   medicineName: string | null;
   context?: any;
 }> {
-  // First try our enhanced detection with Indian medicine knowledge
+  // Try new compound medication name extractor first for precise extraction
+  const extractedName = await extractMedicationName(message);
+  
+  if (extractedName) {
+    console.log(`[MEDICATION-API] Successfully extracted medication name: "${extractedName}"`);
+    
+    // Determine query type
+    const lowerMsg = message.toLowerCase();
+    let queryType = 'general';
+    
+    if (lowerMsg.includes('alternative') || 
+        lowerMsg.includes('substitute') || 
+        lowerMsg.includes('generic') ||
+        lowerMsg.includes('cheaper') ||
+        lowerMsg.includes('instead of') ||
+        lowerMsg.includes('switch') ||
+        lowerMsg.includes('other option')) {
+      queryType = 'alternatives';
+    } else if (lowerMsg.includes('side effect') || 
+               lowerMsg.includes('reaction') || 
+               lowerMsg.includes('safe')) {
+      queryType = 'side_effects';
+    } else if (lowerMsg.includes('dosage') || 
+               lowerMsg.includes('how to take') || 
+               lowerMsg.includes('how many')) {
+      queryType = 'dosage';
+    } else if (lowerMsg.includes('used for') || 
+               lowerMsg.includes('treats') || 
+               lowerMsg.includes('what is') ||
+               lowerMsg.includes('purpose') ||
+               lowerMsg.includes('help with')) {
+      queryType = 'usage';
+    } else if (lowerMsg.includes('interact') || 
+               lowerMsg.includes('with other')) {
+      queryType = 'interactions';
+    }
+    
+    // Fetch context for this medicine
+    const context = await getMedicineContext(extractedName);
+    
+    return {
+      queryType,
+      medicineName: extractedName,
+      context
+    };
+  }
+  
+  // If direct extraction failed, try our enhanced detection with Indian medicine knowledge
   const enhancedDetection = await detectQueryTypeWithContext(message);
   
   // If we got a medicine name from the enhanced detection, use that result
