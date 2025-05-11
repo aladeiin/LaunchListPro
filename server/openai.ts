@@ -41,24 +41,72 @@ export async function getCompoundMedicationAlternatives(
   medicineName: string,
   ingredients: string[]
 ): Promise<string[]> {
-  let alternatives: string[] = [];
+  // Hardcoded compound medication alternatives for common Indian combinations
+  const knownAlternatives: Record<string, string[]> = {
+    'telma-am': [
+      'Telsar AM',
+      'Telmikind AM',
+      'Telista AM',
+      'Tazloc AM',
+      'Telvas AM',
+      'Arbitel AM',
+      'Telpres AM',
+      'Temsan AM'
+    ],
+    'telma-h': [
+      'Telsar H',
+      'Telmikind H',
+      'Telista H',
+      'Tazloc H',
+      'Telvas H',
+      'Arbitel H',
+      'Telpres H'
+    ],
+    'telvas-beta': [
+      'Telma Beta',
+      'Telsar Beta',
+      'Tazloc Beta',
+      'Telmikind Beta'
+    ],
+    'glycomet-gp': [
+      'Glybomet',
+      'Gluformin G',
+      'Gluconorm G',
+      'Glimestar M',
+      'Amaryl M',
+      'Glimy M'
+    ],
+    'cardace-h': [
+      'Ramipril H',
+      'Ramicor H',
+      'Ramistar H',
+      'Zorem H'
+    ],
+    'amlovas-at': [
+      'Amlodipine-Atorvastatin',
+      'Amlogard AT',
+      'Amlolip AS',
+      'Atorlip AM'
+    ]
+  };
+
+  console.log(`[COMPOUND-ALT] Finding alternatives for: ${medicineName}`);
+  console.log(`[COMPOUND-ALT] Ingredients: ${ingredients.join(", ")}`);
   
-  if (!ingredients || ingredients.length === 0) {
-    console.log(`[OPENAI-COMPOUND] No ingredients provided for ${medicineName}`);
-    return alternatives;
+  // Create a normalized name for lookup
+  const normalizedName = medicineName.toLowerCase().replace(/\s+/g, '-');
+  
+  // Check if we have hardcoded alternatives for this medicine
+  if (knownAlternatives[normalizedName]) {
+    console.log(`[COMPOUND-ALT] Found ${knownAlternatives[normalizedName].length} hardcoded alternatives`);
+    return knownAlternatives[normalizedName];
   }
   
-  // Make sure we have at least 2 ingredients for compound meds
-  if (ingredients.length < 2) {
-    console.log(`[OPENAI-COMPOUND] Not enough ingredients for ${medicineName} to be a compound medication`);
-    return alternatives;
-  }
-  
+  // If we don't have hardcoded alternatives, try generating them with AI
   try {
-    console.log(`[OPENAI-COMPOUND] Finding alternatives for compound medicine: ${medicineName}`);
-    console.log(`[OPENAI-COMPOUND] Ingredients: ${ingredients.join(", ")}`);
+    console.log(`[COMPOUND-ALT] No hardcoded alternatives found, using AI`);
     
-    // Create formatted ingredient information
+    // Format ingredient information
     const formattedIngredients = ingredients.map(ing => {
       // Try to extract name and dosage if present
       const dosageMatch = ing.match(/([a-zA-Z\s]+)\s+(\d+(?:\.\d+)?(?:\s*(?:mg|mcg|g|ml|IU))?)/);
@@ -68,56 +116,59 @@ export async function getCompoundMedicationAlternatives(
       return ing.trim();
     });
     
-    // For compound medications, we'll be much more specific in our prompt
+    // Create the prompt content
+    const promptContent = 
+      `I need to find alternative combination medications in India that contain the SAME active ingredients as ${medicineName}.\n\n` +
+      `${medicineName} contains these active ingredients:\n` +
+      formattedIngredients.map(ing => `- ${ing}`).join('\n') + '\n\n' +
+      `Please identify other Indian brand names that contain the SAME combination of active ingredients in similar dosages.` +
+      `Only include medications that contain ALL these ingredients together in ONE formulation.` +
+      `Do NOT include ${medicineName} itself in your list.` +
+      `Return ONLY a JSON array of alternative medication brand names.`;
+      
+    // Make the API call
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: 
-            "You are an expert Indian pharmaceutical database specialized in identifying compound medications with specific active ingredients and dosages. You provide only factual information about Indian brand names for combination medications."
+          content: "You are an expert Indian pharmaceutical database specialized in identifying compound medications."
         },
         {
           role: "user",
-          content: 
-            `I need to find alternative combination medications in India that contain the SAME active ingredients as ${medicineName}.\n\n` +
-            `${medicineName} contains these active ingredients:\n` +
-            formattedIngredients.map(ing => `- ${ing}`).join('\n') + '\n\n' +
-            `Please identify other Indian brand names that contain the SAME combination of active ingredients in similar dosages.\n\n` +
-            `Important guidelines:\n` +
-            `- Only include medications that contain ALL these ingredients together in ONE formulation\n` +
-            `- Do NOT suggest taking multiple separate medications\n` +
-            `- Do NOT include ${medicineName} itself in your list\n` +
-            `- If exact dosages aren't available, suggest alternatives with similar dosage ratios\n` +
-            `- Include common alternatives available in Indian pharmacies and Jan Aushadhi stores\n` +
-            `- If no alternatives exist, return an empty array\n\n` +
-            `Return your response ONLY as a JSON array of alternative medication brand names, e.g. ["Brand 1", "Brand 2"]\n` +
-            `Do not include any explanatory text outside the JSON.`
+          content: promptContent
         }
       ],
-      response_format: { type: "json_object" },
-      temperature: 0.2 // Lower temperature for more factual responses
+      temperature: 0.2
     });
     
+    // Extract the content
     const content = response.choices[0].message.content;
     if (!content) {
-      throw new Error("Empty response from OpenAI");
+      return [];
     }
     
-    // Parse the response
-    const result = JSON.parse(content);
-    if (Array.isArray(result)) {
-      alternatives = result;
-    } else if (result.alternatives && Array.isArray(result.alternatives)) {
-      alternatives = result.alternatives;
-    } else if (result.medications && Array.isArray(result.medications)) {
-      alternatives = result.medications;
+    // Try to parse the response as JSON
+    try {
+      // Extract JSON array if it exists in the content
+      const match = content.match(/\[.*\]/s);
+      if (match) {
+        const jsonContent = match[0];
+        const alternatives = JSON.parse(jsonContent);
+        if (Array.isArray(alternatives)) {
+          console.log(`[COMPOUND-ALT] Found ${alternatives.length} AI-generated alternatives`);
+          return alternatives;
+        }
+      }
+      
+      console.log(`[COMPOUND-ALT] Could not extract array from content`);
+      return [];
+    } catch (error) {
+      console.error(`[COMPOUND-ALT] Error parsing response:`, error);
+      return [];
     }
-    
-    console.log(`[OPENAI-COMPOUND] Found ${alternatives.length} alternatives for ${medicineName}`);
-    return alternatives;
   } catch (error) {
-    console.error(`[OPENAI-COMPOUND] Error finding alternatives for ${medicineName}:`, error);
+    console.error(`[COMPOUND-ALT] Error generating alternatives:`, error);
     return [];
   }
 }

@@ -96,11 +96,11 @@ compoundsRouter.get('/:name/alternatives', async (req: Request, res: Response) =
       alternatives,
       count: alternatives.length
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting alternatives:', error);
     return res.status(500).json({
       error: 'Failed to get alternatives',
-      message: error.message
+      message: error?.message || 'Unknown error'
     });
   }
 });

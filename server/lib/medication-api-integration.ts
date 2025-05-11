@@ -569,6 +569,7 @@ function formatGeneralInfoResponse(info: MedicationInfo): string {
  */
 // Import our enhanced detection system
 import { detectQueryTypeWithContext, getMedicineContext } from './chatbot-trainer';
+import { getCompoundMedicationAlternatives } from '../openai';
 
 /**
  * Extract medication name from user query
