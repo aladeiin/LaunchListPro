@@ -100,6 +100,66 @@ export async function getComprehensiveMedicationInfo(medicineName: string): Prom
         }
       }
     }
+    // For compound medications with multiple ingredients but no identified alternatives, use OpenAI
+    else if (isCompoundMedication && (!alternatives || alternatives.length === 0)) {
+      try {
+        console.log(`[MEDICATION-API] No alternatives found locally for compound medication ${medicineName}, using AI to identify alternatives`);
+        
+        // Import the compound medication alternative finder
+        const { getCompoundMedicationAlternatives } = await import('../openai');
+        
+        // Get the ingredients list
+        let ingredients: string[] = [];
+        
+        // Extract ingredients from the active ingredient string
+        if (activeIngredient) {
+          ingredients = activeIngredient.split(/[,+]/).map(ing => ing.trim()).filter(ing => ing.length > 0);
+        }
+        
+        // If we found at least 2 ingredients (confirming it's a compound medication)
+        if (ingredients.length >= 2) {
+          console.log(`[MEDICATION-API] Identified ${ingredients.length} ingredients in ${medicineName}: ${ingredients.join(', ')}`);
+          
+          // Get alternatives using OpenAI
+          const aiAlternatives = await getCompoundMedicationAlternatives(medicineName, ingredients);
+          
+          if (aiAlternatives && aiAlternatives.length > 0) {
+            console.log(`[MEDICATION-API] Found ${aiAlternatives.length} AI-suggested alternatives for ${medicineName}`);
+            
+            // Convert the AI-suggested names to Medicine objects
+            for (const altName of aiAlternatives) {
+              // Try to find this alternative in our database
+              const altMedicine = await storage.getMedicineByName(altName);
+              if (altMedicine) {
+                alternatives.push(altMedicine);
+              } else {
+                // Create a placeholder Medicine object with price slightly below the original
+                const estimatedPrice = medicine ? medicine.price * 0.9 : (indianContext && indianContext.priceRange ? 
+                  parseFloat(indianContext.priceRange.replace('₹', '')) * 0.9 : 100);
+                
+                alternatives.push({
+                  id: 20000 + alternatives.length, // Different placeholder ID range for AI alternatives
+                  name: altName,
+                  genericName: indianContext?.genericName || '',
+                  activeIngredient: activeIngredient,
+                  description: `Alternative to ${medicineName} with the same active ingredients`,
+                  manufacturer: "Available at leading pharmacies",
+                  isGeneric: false,
+                  price: estimatedPrice,
+                  inStock: true,
+                  dosage: indianContext?.dosage || '',
+                  imageUrl: '',
+                  availableAt: ["Leading Pharmacies"],
+                  stockCount: 10
+                });
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`[MEDICATION-API] Error finding AI alternatives for compound medication ${medicineName}:`, error);
+      }
+    }
     // Otherwise, look for alternatives in our database
     else if (activeIngredient) {
       try {
@@ -371,7 +431,12 @@ function formatAlternativesResponse(info: MedicationInfo): string {
   }
   
   if (isCompoundMedication) {
-    response += `When switching between combination medications, it's particularly important to verify that all active ingredients and their dosages are appropriate for your condition. `;
+    response += `**Important Information About Compound Medications:**\n\n`;
+    response += `This is a combination medication containing multiple active ingredients. When switching between combination medications:\n\n`;
+    response += `- Verify that all ingredients and their dosages match your prescription\n`;
+    response += `- Each ingredient may affect your condition differently\n`;
+    response += `- Some alternatives may have slightly different ratios of ingredients\n`;
+    response += `- The alternatives listed contain the same active ingredients but may vary in inactive ingredients\n\n`;
   }
   
   response += `Remember, always consult your healthcare provider before making any changes to your medication regimen.`;

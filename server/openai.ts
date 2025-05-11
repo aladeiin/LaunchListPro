@@ -31,6 +31,72 @@ function getFallbackMedicationInfo(medication: string): MedicationInfo {
   };
 }
 
+/**
+ * Get compound medication alternatives - for medications with multiple active ingredients
+ * @param medicineName Name of the compound medication
+ * @param ingredients List of ingredients (with dosages if available)
+ * @returns Promise with a list of alternative medication names
+ */
+export async function getCompoundMedicationAlternatives(
+  medicineName: string,
+  ingredients: string[]
+): Promise<string[]> {
+  let alternatives: string[] = [];
+  
+  if (!ingredients || ingredients.length === 0) {
+    console.log(`[OPENAI-COMPOUND] No ingredients provided for ${medicineName}`);
+    return alternatives;
+  }
+  
+  try {
+    console.log(`[OPENAI-COMPOUND] Finding alternatives for compound medicine: ${medicineName}`);
+    console.log(`[OPENAI-COMPOUND] Ingredients: ${ingredients.join(", ")}`);
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: 
+            "You are an expert Indian pharmaceutical database specialized in identifying compound medications that contain the same active ingredients. You provide only factual information about Indian brand names and their compositions, not general advice."
+        },
+        {
+          role: "user",
+          content: 
+            `Identify Indian medication brand names that contain the EXACT SAME combination of these active ingredients:\n\n` +
+            `${ingredients.join("\n")}\n\n` +
+            `The original medicine is called "${medicineName}". Do not include this medicine in your response.\n\n` +
+            `Only include medications with all these ingredients together in the same formulation. Do not suggest individual medications for separate ingredients.\n\n` +
+            `Return ONLY a JSON array of alternative medication names with no additional text. Format: ["Brand Name 1", "Brand Name 2"]`
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2 // Lower temperature for more factual responses
+    });
+    
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error("Empty response from OpenAI");
+    }
+    
+    // Parse the response
+    const result = JSON.parse(content);
+    if (Array.isArray(result)) {
+      alternatives = result;
+    } else if (result.alternatives && Array.isArray(result.alternatives)) {
+      alternatives = result.alternatives;
+    } else if (result.medications && Array.isArray(result.medications)) {
+      alternatives = result.medications;
+    }
+    
+    console.log(`[OPENAI-COMPOUND] Found ${alternatives.length} alternatives for ${medicineName}`);
+    return alternatives;
+  } catch (error) {
+    console.error(`[OPENAI-COMPOUND] Error finding alternatives for ${medicineName}:`, error);
+    return [];
+  }
+}
+
 export async function getMedicationInfo(medication: string): Promise<MedicationInfo> {
   let apiCallCount = 0;
   const maxRetries = 1;

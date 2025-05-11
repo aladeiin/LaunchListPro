@@ -12,6 +12,9 @@ const TEST_COMPOUND_MEDICINES = [
   'Amaryl-M 1mg Tablet', // Contains glimepiride and metformin
   'Glycomet-GP 1 Tablet', // Contains metformin and glimepiride
   'Trivastal LA 50mg/1000mg Tablet', // Contains teriflunomide and metformin
+  'Trika Plus', // Contains alprazolam and propranolol
+  'Cardace H 10', // Contains ramipril and hydrochlorothiazide
+  'Cilacar T', // Contains cilnidipine and telmisartan
 ];
 
 async function testCompoundMedicineContext() {
