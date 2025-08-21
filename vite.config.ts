@@ -8,29 +8,35 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export default defineConfig({
-  plugins: [
+// Make the config ASYNC so we can await dynamic imports safely
+export default defineConfig(async ({ mode }) => {
+  const plugins = [
     react(),
     runtimeErrorOverlay(),
     themePlugin(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
-      : []),
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "client", "src"),
-      "@shared": path.resolve(__dirname, "shared"),
+  ];
+
+  // Load the Replit cartographer plugin only during non-production + when running on Replit
+  if (mode !== "production" && process.env.REPL_ID !== undefined) {
+    const { cartographer } = await import("@replit/vite-plugin-cartographer");
+    plugins.push(cartographer());
+  }
+
+  return {
+    plugins,
+    // Vite project root is the /client folder
+    root: path.resolve(__dirname, "client"),
+    // IMPORTANT: build to client/dist (NOT repo/dist/public)
+    build: {
+      outDir: path.resolve(__dirname, "client", "dist"),
+      emptyOutDir: true,
     },
-  },
-  root: path.resolve(__dirname, "client"),
-  build: {
-    outDir: path.resolve(__dirname, "dist/public"),
-    emptyOutDir: true,
-  },
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "client", "src"),
+        // lets the client import from ../shared if you use shared TS types
+        "@shared": path.resolve(__dirname, "shared"),
+      },
+    },
+  };
 });
